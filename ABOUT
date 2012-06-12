@@ -1,0 +1,4 @@
+
+
+Ocull is a free library used to perform real-time occlusion queries on massive 
+scene. It uses a gpu rasterizer (based on CudaRaster) to perform such queries.
