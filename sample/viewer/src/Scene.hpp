@@ -33,6 +33,9 @@ class Scene
     std::vector<engine::VertexBuffer> m_primitives;
     std::vector<bool> m_meshInit;
     
+    // cube mesh to display the main frustum
+    engine::VertexBuffer m_cubeWire;
+    
     engine::Program m_program;
     
         
@@ -51,6 +54,9 @@ class Scene
     void updateGeometry();
     
     void render(const engine::Camera& camera);
+    
+    void renderMainFrustum(const engine::Camera &mainCamera,
+                           const engine::Camera &debugCamera);
 };
 
 }

@@ -103,14 +103,14 @@ class VertexBuffer
     
     /// enable vertex arrays & draw the buffers given, in indexed mode if specified
     /// directly otherwise
-    void draw() const
+    void draw(GLenum mode=GL_TRIANGLES) const
     {
       enable();
       
       if (m_ibo) {
-        glDrawElements( GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
+        glDrawElements( mode, m_numIndices, GL_UNSIGNED_INT, 0);
       } else {
-        glDrawArrays( GL_TRIANGLES, 0, 3u*m_numVertices);
+        glDrawArrays( mode, 0, 3u*m_numVertices);
       }
 
       disable();

@@ -7,9 +7,14 @@
 
 #include "Data.hpp"
 #include "engine/Camera.hpp"
+#include "engine/VertexBuffer.hpp"
 
 
 namespace app {
+
+namespace cubewire {
+void setup(engine::VertexBuffer &vb);
+}
 
 // -----------------------------------------------
 // Constructor / Destructor
@@ -86,6 +91,10 @@ void Scene::initGeometry(const char *filename)
   /// Resize global buffers
   m_meshInit.resize(m_drnScene.numMeshes, false);  
   m_primitives.resize(m_drnScene.numMeshes);
+  
+  //---------------
+  
+  cubewire::setup( m_cubeWire );
 }
 
 void Scene::initShader()
@@ -195,7 +204,7 @@ void Scene::run(Data &data)
   
   updateGeometry();
   
-  //-----------
+  ///-----------
 
   // RENDERING
   
@@ -206,27 +215,43 @@ void Scene::run(Data &data)
   glDepthFunc(GL_LESS);
   
   glDisable( GL_CULL_FACE );
-
+  
 
   sf::Vector2u windowSize = data.context.handle.getSize();
+  engine::Camera &mainCamera = data.view.camera[Data::View::CAMERA_MAIN];
+  engine::Camera &debugCamera = data.view.camera[Data::View::CAMERA_DEBUG];
 
+  // TODO better customisation
   if (data.ui.displayMode == Data::UI::DISPLAY_SPLITTED)
-  {
+  {    
     //TODO change the projection matrix, or resize the window
+    // (currently done in EventHandler..)
     
     int halfWidth = 0.5f * windowSize.x;
-    
+        
     glViewport( 0, 0, halfWidth, windowSize.y);
-    render( data.view.camera[Data::View::CAMERA_MAIN] );
-    
+    render( mainCamera );
+        
     glViewport( halfWidth, 0, windowSize.x-halfWidth, windowSize.y);
-    render( data.view.camera[Data::View::CAMERA_DEBUG] );
+    render( debugCamera );    
+
+    if (data.debug.bShowMainFrustum) {
+      renderMainFrustum( mainCamera, debugCamera);
+    }
   }
   else
   {
     glViewport( 0, 0, windowSize.x, windowSize.y);
     render( data.view.camera[data.view.active] );
+    
+    if (data.view.active == Data::View::CAMERA_DEBUG) {    
+      if (data.debug.bShowMainFrustum) {
+        renderMainFrustum( mainCamera, debugCamera);
+      }
+    }
+    
   }
+  
 }
 
 void Scene::render(const engine::Camera& camera)
@@ -234,7 +259,6 @@ void Scene::render(const engine::Camera& camera)
   m_program.bind();  
 
   const glm::mat4 &viewProj = camera.getViewProjMatrix();
-
   
   for (uint64_t i = 0u; i < m_primitives.size(); ++i)  //
   {
@@ -259,14 +283,82 @@ void Scene::render(const engine::Camera& camera)
     m_program.setUniform( "uColor", glm::vec3(mat->diffuseColor[0], 
                                               mat->diffuseColor[1], 
                                               mat->diffuseColor[2]));
+    m_program.setUniform( "uEnableLight", true);
     
-    assert( glGetError() == 0 );//
     p->draw();
-    assert( glGetError() == 0 );//
   }
 
   m_program.unbind();
+  
+#if 0
+  if (cameraType == CAMERA_DEBUG)
+  {
+    // Render the main frustum
+    if (data.ui.bShowMainFrustum)
+    {
+      renderMainFrustum(camera);
+    }
+  }
+#endif
 }
+
+void Scene::renderMainFrustum(const engine::Camera &mainCamera,
+                              const engine::Camera &debugCamera)
+{
+  const glm::mat4 model = glm::inverse( mainCamera.getViewProjMatrix() );  
+  const glm::mat4 viewProj = debugCamera.getViewProjMatrix();
+  
+  m_program.bind();  
+  
+    m_program.setUniform( "uModelViewProjMatrix", viewProj * model);    
+    m_program.setUniform( "uColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    m_program.setUniform( "uEnableLight", false);
+    
+    m_cubeWire.draw(GL_LINES);
+                                              
+  m_program.unbind();
+}
+
+namespace cubewire {
+
+void setup(engine::VertexBuffer& vb)
+{  
+  float vertices[] = 
+  {
+    -1.0f, -1.0f, -1.0f, //0
+    -1.0f, -1.0f, +1.0f, //1
+    -1.0f, +1.0f, -1.0f, //2
+    -1.0f, +1.0f, +1.0f, //3
+    +1.0f, -1.0f, -1.0f, //4
+    +1.0f, -1.0f, +1.0f, //5
+    +1.0f, +1.0f, -1.0f, //6
+    +1.0f, +1.0f, +1.0f  //7
+  };
+  
+  unsigned int lineIndices[] = 
+  {
+    0, 1,  0, 2,  0, 4,  1, 3,  1, 5,  2, 3,
+    2, 6,  3, 7,  4, 5,  4, 6,  5, 7,  6, 7
+  };
+  
+  size_t vertices_size = (sizeof(vertices) / sizeof(vertices[0]));
+  size_t lineIndices_size = (sizeof(lineIndices) / sizeof(lineIndices[0]));
+  
+  std::vector<glm::vec3> &positions = vb.getPositions();
+  positions.resize( vertices_size/3 );
+  for (int i=0; i<positions.size(); ++i) {
+    positions[i] = glm::vec3(vertices[3*i+0], vertices[3*i+1], vertices[3*i+2]);
+  }
+  
+  std::vector<GLuint> &indices = vb.getIndices();
+  indices.assign( lineIndices, lineIndices + lineIndices_size);
+  
+  vb.complete( GL_STATIC_DRAW );
+  vb.cleanData();
+}
+
+} // namespace cubewire
+
 
 } //namespace app
 
