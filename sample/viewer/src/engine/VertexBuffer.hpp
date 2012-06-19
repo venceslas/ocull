@@ -1,10 +1,14 @@
-#ifndef RENDERER_VERTEXBUFFER_HPP
-#define RENDERER_VERTEXBUFFER_HPP
+// TODO rewrite
+
+#ifndef ENGINE_VERTEXBUFFER_HPP
+#define ENGINE_VERTEXBUFFER_HPP
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
 
+
+namespace engine {
 
 enum VertexAttribLocation
 {
@@ -102,7 +106,7 @@ class VertexBuffer
     void draw() const
     {
       enable();
-
+      
       if (m_ibo) {
         glDrawElements( GL_TRIANGLES, m_numIndices, GL_UNSIGNED_INT, 0);
       } else {
@@ -138,4 +142,6 @@ class VertexBuffer
 
 ********************************************************************/
 
-#endif //RENDERER_VERTEXBUFFER_HPP
+} // namespace engine
+
+#endif // ENGINE_VERTEXBUFFER_HPP

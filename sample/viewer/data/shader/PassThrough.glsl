@@ -47,7 +47,7 @@ uniform vec3 uColor = vec3( 1.0f, 0.0f, 0.0f);
 void main()
 {
   // Simple diffuse light model
-  const vec3 lightDirection = normalize(vec3( -1.0f, 1.0f, 1.0f));
+  const vec3 lightDirection = normalize(vec3(-1.0f, 1.0f, 1.0f));
   
   vec3 normal = (gl_FrontFacing) ? vNormal : -vNormal;
        normal = normalize(normal);

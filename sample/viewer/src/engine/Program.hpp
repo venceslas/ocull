@@ -1,10 +1,13 @@
-#ifndef RENDERER_PROGRAM_HPP_
-#define RENDERER_PROGRAM_HPP_
+// TODO rewrite
+
+#ifndef ENGINE_PROGRAM_HPP__
+#define ENGINE_PROGRAM_HPP__
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace engine {
 
 enum ShaderType
 {
@@ -181,4 +184,6 @@ program.destroy();
  ------------------------------------------------------------------------------
 */
 
-#endif // RENDERER_PROGRAM_HPP_
+} //namespace engine
+
+#endif // ENGINE_PROGRAM_HPP_

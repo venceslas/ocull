@@ -17,12 +17,12 @@
   #define M_PI_2  1.57079632679489661923
 #endif
 
-
+namespace engine {
 
 Camera::Camera()
 {
   // Default projection parameters
-  m_fov   = 45.0f;
+  m_fov   = 60.0f;
   m_zNear = 0.1f;
   m_zFar  = 1000.0f;
   setProjectionParams( m_fov, 1.0f, m_zNear, m_zFar);
@@ -61,9 +61,8 @@ void Camera::setProjectionParams( float fov, float aspect, float zNear, float zF
   m_zFar = zFar;
   
   m_projectionMatrix = glm::perspective( m_fov, aspect, m_zNear, m_zFar);
-  m_viewProjMatrix = m_projectionMatrix * m_viewMatrix;      
+  m_viewProjMatrix = m_projectionMatrix * m_viewMatrix;
 }
-
 
 void Camera::setViewParams(const glm::vec3 &pos, const glm::vec3 &target)
 {
@@ -107,6 +106,12 @@ void Camera::setViewParams(const glm::vec3 &pos, const glm::vec3 &target)
       
   float len = sqrtf( zAxis.x*zAxis.x + zAxis.z*zAxis.z );
   m_pitchAngle = - atan2f( zAxis.y, len);
+}
+
+void Camera::updateProjectionAspectRatio( float aspect )
+{
+  m_projectionMatrix = glm::perspective( m_fov, aspect, m_zNear, m_zFar);
+  m_viewProjMatrix = m_projectionMatrix * m_viewMatrix;
 }
 
 
@@ -221,4 +226,6 @@ void Camera::update(float deltaT)
   m_viewMatrix = glm::lookAt( m_position, m_target, m_up);
   m_viewProjMatrix = m_projectionMatrix * m_viewMatrix;
 }
+
+} // namespace engine
 

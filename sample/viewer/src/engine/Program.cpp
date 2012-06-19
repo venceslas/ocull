@@ -17,8 +17,9 @@ void printShaderLog(GLuint shader)
   }
 }
   
-}
+} // namespace
 
+namespace engine {
 
 bool Program::addShader(const ShaderType shaderType, const char* name)
 {
@@ -68,3 +69,5 @@ bool Program::link()
   
   return true;
 }
+
+} // namespace engine

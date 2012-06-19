@@ -1,13 +1,17 @@
+///
+///
+///
+
 #include <cstdlib>
-#include "App.hpp"
+#include "Viewer.hpp"
 
 
 int main(int argc, char *argv[])
 {
-  App app;
+  app::Viewer viewer;
   
-  app.init( argc, argv);
-  app.run();
+  viewer.init( argc, argv);  
+  viewer.run();
   
   return EXIT_SUCCESS;
 }

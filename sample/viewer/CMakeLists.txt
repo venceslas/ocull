@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-project(viewer)
+project( ocull_viewer )
 
 
 #
@@ -26,6 +26,7 @@ file( GLOB glew
       ${CMAKE_SOURCE_DIR}/thirdparty/GL/*.h )
 add_library( GLEW ${glew} )
 
+
 #
 # glsw lib file set
 #
@@ -34,26 +35,16 @@ file( GLOB glsw
       ${CMAKE_SOURCE_DIR}/thirdparty/glsw/*.h )
 add_library( GLSW ${glsw} )
 
+#
+# gltext lib
+#
+add_subdirectory( ${CMAKE_SOURCE_DIR}/thirdparty/gltext )
 
-###############################################################################
 
 #
-# ocull lib file set
+# SFML lib
 #
-file( GLOB_RECURSE ocull
-      ${CMAKE_SOURCE_DIR}/../../lib/*.cpp
-      ${CMAKE_SOURCE_DIR}/../../lib/*.cpp
-      ${CMAKE_SOURCE_DIR}/../../lib/*.hpp )
-
-
-# CUDA
-include( FindCUDA )
-include_directories( /usr/local/cuda/include )
-link_libraries( "-L/usr/lib/nvidia-current -lcuda" )
-
-# TODO: compile the library apart
-
-###############################################################################
+include( FindSFML )
 
 
 file( GLOB_RECURSE Headers 
@@ -65,17 +56,17 @@ file( GLOB_RECURSE Sources
 
 include_directories( thirdparty )
 include_directories( src )
-include_directories( ../../lib ) #
 
 set( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR} )
 
 #
 # viewer
 #
-cuda_add_executable( viewer 
-                     ${drone_lib_files} ${drone_scene_lib_files}
-                     ${Sources} ${Headers}
-                     ${ocull})
+add_executable(viewer 
+               ${drone_lib_files} ${drone_scene_lib_files}
+               ${Sources} ${Headers}
+               ${ocull})
 
-target_link_libraries(viewer glut GLU GL GLEW GLSW)
+target_link_libraries(viewer 
+                      sfml-window ${GLTEXT_LIBRARIES} GLU GL GLEW GLSW )
 

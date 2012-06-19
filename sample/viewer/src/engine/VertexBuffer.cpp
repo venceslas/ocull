@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 
+namespace engine {
     
 void VertexBuffer::generate()
 {
@@ -13,9 +14,10 @@ void VertexBuffer::generate()
 }
 
 void VertexBuffer::destroy()
-{
+{  
   if (m_vao)
   {
+    glBindVertexArray( 0u );
     glDeleteVertexArrays( 1, &m_vao);
     m_vao = 0u;
   }
@@ -127,6 +129,7 @@ void VertexBuffer::complete(GLenum usage)
 
 void VertexBuffer::bind() const
 {
+  assert( m_vao != 0 );
   glBindVertexArray( m_vao );
 }
 
@@ -136,7 +139,8 @@ void VertexBuffer::unbind()
 }
 
 void VertexBuffer::enable() const
-{  
+{ 
+  
   bind();
   
   if (m_positionSize != 0)  glEnableVertexAttribArray( VATTRIB_POSITION );
@@ -162,3 +166,6 @@ void VertexBuffer::disable() const
   
   unbind();
 }
+
+} // namespace engine
+

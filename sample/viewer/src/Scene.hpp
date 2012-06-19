@@ -1,71 +1,47 @@
-#ifndef SCENE_HPP_
-#define SCENE_HPP_
+#ifndef APP_SCENE_HPP__
+#define APP_SCENE_HPP__
 
 #include <vector>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-
 #include <drone_scene/drone_scene.hpp>
 
-#include "engine/renderer/Program.hpp"
-#include "engine/renderer/VertexBuffer.hpp"
+#include "engine/VertexBuffer.hpp"
+#include "engine/Program.hpp"
 
-class Camera;
 
-namespace Ocull {
-class Scene;
-class Query;
-class IndexList;
+
+namespace engine {
 class Camera;
 }
 
+namespace app {
 
-//dummy struct
-struct Sampler
-{
-  unsigned int textureId;
-};
-
-struct Render
-{
-  std::vector<VertexBuffer> primitives;
-
-  std::vector<bool> meshInitialized;    
-
-  // unused xxx
-  std::vector<int32_t> meshFrameUploaded; // index of the mesh frame uploaded  
-  std::vector<uint64_t> meshIdx;//
-  std::vector<uint32_t> samplerIdx;//
-
-  // Textures
-  std::vector<Sampler> samplers;
-};
-
-
+struct Data;
 
 class Scene
 {
   public:
+    bool m_bFileLoaded;
+    bool m_bSceneResolved;
+    
+    // DRONE
     drn_t m_cache;    
     drn_scene::Scene m_drnScene;
     
-    Render m_render;
+    // Meshes
+    std::vector<engine::VertexBuffer> m_primitives;
+    std::vector<bool> m_meshInit;
     
-    Program m_program;
+    engine::Program m_program;
     
-    // Ocull datas
-    Ocull::Scene *m_OcullScene;
-    Ocull::Query *m_OcullQuery;
-    Ocull::IndexList *m_OcullIndexList;
-    Ocull::Camera *m_OcullCamera;
-    
-    
+        
   public:
     Scene();
     ~Scene();
     
     void init(const char *filename);    
-    void render(const Camera& camera);
+    void run(Data &data);
     
   private:
     void initGeometry(const char *filename);
@@ -73,6 +49,10 @@ class Scene
     void initQuery();
     
     void updateGeometry();
+    
+    void render(const engine::Camera& camera);
 };
 
-#endif //SCENE_HPP_
+}
+
+#endif //APP_SCENE_HPP__

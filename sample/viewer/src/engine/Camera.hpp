@@ -1,3 +1,5 @@
+// TODO rewrite
+
 #ifndef ENGINE_CAMERA_HPP_
 #define ENGINE_CAMERA_HPP_
 
@@ -6,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+
+namespace engine {
 
 enum CameraKeys
 {
@@ -77,8 +81,9 @@ class Camera
     void motionHandler(int x, int y, bool bClicked);     
    
     // ++ SETTERS ++
-    void setProjectionParams( float fov, float aspect, float zNear, float zFar);    
+    void setProjectionParams( float fov, float aspect, float zNear, float zFar);
     void setViewParams(const glm::vec3 &pos, const glm::vec3 &target);
+    void updateProjectionAspectRatio( float aspect );
     
     void setMoveCoefficient(float coef) { m_moveCoef = coef; }
     void setRotationCoefficient(float coef) { m_rotationCoef = coef; }
@@ -105,5 +110,7 @@ class Camera
     bool isXAxisInverted() const { return m_bInvertPitch; }
     bool isYAxisInverted() const { return m_bInvertYaw; }
 };
+
+} // namespace engine
 
 #endif // ENGINE_CAMERA_HPP_
