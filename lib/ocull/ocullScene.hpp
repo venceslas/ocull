@@ -1,131 +1,76 @@
-///
-///   \file ocullScene.hpp
-///   
-
 #ifndef OCULL_SCENE_HPP_
 #define OCULL_SCENE_HPP_
 
-#include <vector>
-
-#include "ocullDefs.hpp"
-#include "rasterizer/framework/gpu/Buffer.hpp"
 
 
-namespace Ocull {
+namespace ocull {
 
-/// 
-/// Holds geometrics attribute for a 3D mesh
-/// 
-class Model
+// ~
+struct Mesh
 {
-  friend class Scene;
+  struct Vertex
+  {
+    FW::Buffer buffer;
+    size_t offset;
+    size_t size;
+    size_t stride;
+  } vertex;
+
+  struct Index
+  {
+    FW::Buffer buffer;
+    size_t offset;
+    size_t size;
+  } index;
   
-  
-  private:
-    /// OpenGL buffer (for debugging visualization)
-    //VertexBuffer m_vertexBuffer;
+  //
+  Mesh( GLuint vbo, size_t vertOffset, size_t numElems, size_t stride,
+        GLuint ibo, size_t triOffset, size_t numTri)
+  {
+    vertex.buffer.wrapGL(vbo);
+    vertex.offset = vertOffset;
+    vertex.size = numElems;
+    vertex.stride = stride;
     
-    /// CudaRaster buffer (for visibility tests)
-    FW::Buffer m_inVertices;          // vs input vertices
-    FW::Buffer m_outVertices;         // vs output vertices (transformed) [share it ?]
-    FW::Buffer m_indices;
-    
-    int m_numVertices;
-    int m_numTriangles;
-  
-  
-  public:
-    const Ocull::Vector3* getVertices() const;
-    const int getVertexCount() const { return m_numVertices; }
-        
-    const Ocull::Vector3i* getTriangles() const;
-    const int getTriangleCount() const { return m_numTriangles; }
-    
-  
-  private:
-    Model(const float *vertices, 
-          const unsigned int *indices,
-          int vertexCount, 
-          int triangleCount, 
-          int vertexStride);
-        
-    DISALLOW_COPY_AND_ASSIGN(Model);
+    index.buffer.wrapGL(ibo);
+    index.offset = triOffset;
+    index.size = numTri;//
+  }
+  //
+  Mesh( float *vertices, size_t numElems,
+        unsigned int *indices, size_t numTri)
+  {
+  }
 };
 
-///
-/// Instance of a Model
-///
-class Object
+
+//typedef meshIdx_t unsigned int;
+
+//
+class Scene 
 {
-  friend class Scene;
-  
-  
-  private:
-    const Ocull::Model *m_pModel;
-    Ocull::Matrix4x4 m_worldMatrix;
-    unsigned int m_id;
-    unsigned int m_flags;
-    
-    
-  public:
-    const Ocull::Model* getModel() const { return m_pModel; }
-    void getMatrix(Ocull::Matrix4x4 &m) const { m = m_worldMatrix; }
-    
-  
-  private:    
-    Object(const Ocull::Model *model, const Ocull::Matrix4x4 &m, unsigned int id, 
-           unsigned int flags);
-    
-    DISALLOW_COPY_AND_ASSIGN(Object);
-};  
+  /// [ Geometric datas ]
+  std::vector<ocull::Mesh> meshes;
 
-
-///
-/// Internal representation of a 3D scene
-///
-class Scene
-{ 
-  private:
-    std::vector<Model*> m_Models;
-    std::vector<Object*> m_Objects;
-    
+  // TODO change for a cache efficient structure :
+  //std::vector<FW::Buffer> vertices;
+  //std::vector<FW::Buffer> indices;
+  //std::vector<FW::Vec3ui> vertexParams;
+  //std::vector<FW::Vec2ui> indexParams;
   
-  public:
-    //static Scene* Create(const char *filename=NULL);      
+  /// [ per Instance attributes ]
+  std::vector<unsigned int> meshesId;
+  std::vector<ocull::Matrix4x4> worldMatrices;
   
-  public:
-    Scene() {}
-    ~Scene() {release();}
-    
-    void release();    
-    
-    // === Model ===
-    const Model* insertModel(const float *vertices,
-                             const unsigned int *indices,
-                             int vertexCount,
-                             int triangleCount,
-                             int vertexStride=0);
-    
-    unsigned int getModelCount(void) const;
-    
-    const Model* getModel(unsigned int index) const;
-    
-    
-    // === Object ===
-    const Object* insertObject(const Model *model,
-                               const Ocull::Matrix4x4 &m,
-                               unsigned int id,
-                               unsigned int flags=0u);
-    
-    unsigned int getObjectCount(void) const;
-    
-    const Object* getObject(unsigned int index) const;
-    
+  //--
   
-  private:
-    DISALLOW_COPY_AND_ASSIGN(Scene);
+  unsigned int insertMesh( const ocull::Mesh &mesh );//
+  void insertModel( unsigned int meshId, Matrix4x4 worldMatrix);//
+      
+  void reset();//
+  
 };
 
-}
+} // namespace ocull
 
 #endif //OCULL_SCENE_HPP_

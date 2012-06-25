@@ -1,52 +1,47 @@
-///
-///   \file ocullCamera.hpp
-///
-///
-
 #ifndef OCULL_CAMERA_HPP_
 #define OCULL_CAMERA_HPP_
 
-#include "ocullDefs.hpp"
+namespace ocull {
 
-
-namespace Ocull {
-
-///
-///
-///
-struct Frustum
-{
-  public:
-    float left;
-    float right;
-    float top;
-    float bottom;
-    float zNear;
-    float zFar;
+struct Frustum {
+  float left;
+  float right;
+  float bottom;
+  float top;  
+  float near;
+  float far;
   
-  public:
-    Frustum(float fov, float aspectRatio, float zNear, float zFar);
+  Matrix4x4 projectionMatrix;
+  
+  //--
+  
+  Frustum(float fov, float aspectRatio, float zNear, float zFar)
+  {
+  }
+  
+  Frustum(float left, float right, float bottom, float top, 
+          float zNear, float zFar)
+  {
+  }
 };
 
-///
-///
-///
-class Camera
-{
-  private:
-    Frustum m_frustum;
-    Matrix4x4 m_viewMatrix;
-    
-  public:
-    Camera( const Frustum& frustum, const Ocull::Matrix4x4& viewMatrix);
-    
-    const Frustum& getFrustum() const;
-    const Ocull::Matrix4x4& getViewMatrix() const;
-    
-    void setFrustum( const Frustum& frustum );    
-    void setViewMatrix( const Ocull::Matrix4x4& viewMatrix );
+struct DepthBuffer {
+  struct Desc {
+    unsigned int width;
+    unsigned int height;
+    //Format format;
+  } desc;
+  
+  void *depth;  
 };
 
-}
+struct Camera {
+  Frustum frustum;
+  Matrix4x4 viewMatrix;
 
-#endif // OCULL_CAMERA_HPP_
+  Camera( const Frustum& frustum, const Ocull::Matrix4x4& viewMatrix);
+};
+
+} //namespace ocull
+
+#endif //OCULL_CAMERA_HPP_

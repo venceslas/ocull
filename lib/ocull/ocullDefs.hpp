@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 
 
-namespace Ocull {
+namespace ocull {
 
 #if 1
 
@@ -56,7 +56,7 @@ class Matrix4x4
 
 #endif
 
-} // namespace Ocull
+} // namespace ocull
 
 
 /// A macro to disallow the copy constructor and operator= functions

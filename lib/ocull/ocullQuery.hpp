@@ -1,98 +1,67 @@
-///
-///   \file ocullQuery.hpp
-///
-///
-
 #ifndef OCULL_QUERY_HPP_
 #define OCULL_QUERY_HPP_
 
-#include "ocullDefs.hpp"
-#include "ocullRasterizer.hpp"
+namespace ocull {
 
-
-namespace Ocull {
-
-class Scene;
-
-
-///
-///   Maps a client side array of 32bits integer.
-///   This is used for the client to retrieve the list of visible objects index.
-///
-class IndexList
-{
-  private:
-    int *m_pArray;
-    int m_size;
-    
-  public:
-    IndexList(int *pArray, int size)
-        : m_pArray(pArray),
-          m_size(size)
-    {}
-    
-    int* getPtr() const;
-    int getSize() const;
-
-  private:
-    DISALLOW_COPY_AND_ASSIGN(IndexList);
-};
-
-///
-///  
-///
-class OcclusionBuffer
-{
-  public:
-    struct BufferDesc
-    {
-      int width;
-      int height;
-    };
-    
-  private:
-    BufferDesc m_desc;
-    //FW::CudaSurface* m_depthBuffer;
-    
-  public:
-    OcclusionBuffer();
-  
-    bool isAABBVisible( const Vector3 &min, const Vector3 &max);
-    
-    void getBuffer(unsigned char *buffer) const;    
-    void getBufferDesc(BufferDesc& desc) const;
-  
-
-  private:
-    DISALLOW_COPY_AND_ASSIGN(OcclusionBuffer);
-};
-
-///
-/// 
-///
 class Query
 {
   private:
-    static Ocull::Rasterizer sRasterizer;
+    ocull::DepthBuffer *m_DepthBuffer;
     
-  private:
-    const Ocull::Scene *m_pScene;
-    //use 'rasterizer'
-          
+    struct Stats 
+    {    
+      std::vector<unsigned int> samplesPassed;
+      unsigned int numObjects;
+      unsigned int numObjectsPassed;
+      unsigned int numTriangles;
+      unsigned int numTrianglesPassed;      
+      float queryTime;
+    } m_stats;
+    
+    // States
+    oql::Camera *m_pCamera;
+    bool m_bHasBegun;
+    
+
   public:
-    Query();
+    Query(Context &context)
+        : m_DepthBuffer(NULL)
+    {
+      //context.addQuery(this);
+      resetStats();
+    }
+    
     ~Query();
+
+    // Resize the depth buffer
+    void resize(unsigned int w, unsigned int h);
     
-    void init(const Scene *scene);
-    
-    void queryVisibility( const Ocull::Camera& camera, 
-                          Ocull::IndexList* pIndexList,
-                          OcclusionBuffer* pOcclusionBuffer=NULL);
+    /// +++ QUERY +++
+    void begin(const ocull::Camera &camera, 
+               const ocull::DepthBuffer *pDepthBuffer=NULL);
+    void end();
+
+    void uploadScene(const ocull::Scene &scene);
+    void uploadMesh(const ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
+
+    /// +++ GETTERS +++
+    void getSamplesPassed(unsigned int *samplesPassed);
+    void getSamplesPassed(unsigned int *samplesPassed, size_t count);
+        
+    void getDepthBuffer(ocull::DepthBuffer *depthBuffer);
+
+    //TODO
+    //void getQueryTime();
+    //void getNumObjects();
+    //void getNumPassed();
+    //void getNumTriangles();
+    //void getNumTrianglesPassed();
 
   private:
-    DISALLOW_COPY_AND_ASSIGN(Query);
+    void clearDepth(const ocull::DepthBuffer *pDepthBuffer);
+    void resetStats();
 };
 
-}
+} // namespace ocull
 
-#endif // OCULL_QUERY_HPP_
+#endif //OCULL_QUERY_HPP_
