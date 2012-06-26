@@ -1,6 +1,15 @@
+///
+///
+///
+///
+
 #ifndef OCULL_SCENE_HPP_
 #define OCULL_SCENE_HPP_
 
+#include <vector>
+
+#include "rasterizer/framework/gpu/Buffer.hpp"
+#include "ocullDefs.hpp"
 
 
 namespace ocull {

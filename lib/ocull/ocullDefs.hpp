@@ -26,7 +26,6 @@ typedef glm::mat4  Matrix4x4;
 /// before including any Ocull headers and using typedefs while the
 /// underlying data layout is respected.
 #ifndef OCULL_OVERRIDE_VECTOR
-
 class Vector2
 {
   float x, y;
@@ -51,7 +50,6 @@ class Matrix4x4
 {
   float m[4][4]; // column major matrix
 };
-
 #endif // OCULL_OVERRIDE_VECTOR
 
 #endif

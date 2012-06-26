@@ -133,6 +133,43 @@ void CudaRaster::init(void)
 
 //------------------------------------------------------------------------
 
+// wip
+#if 0
+void CudaRaster::resetDepthBuffer(CudaSurface* depth)
+{
+  m_depthBuffer = depth;
+  
+  if (!m_depthBuffer) {
+    return;
+  }
+
+  // Check for errors.
+  if (!m_depthBuffer) {
+    fail("CudaRaster: No depth buffer specified!");
+  }
+  if (m_depthBuffer->getFormat() != CudaSurface::FORMAT_DEPTH32) {
+    fail("CudaRaster: Unsupported depth buffer format!");
+  }
+  
+  // Initialize parameters.
+  m_viewportSize  = m_depthBuffer->getSize();
+  m_sizePixels    = m_depthBuffer->getRoundedSize();
+  m_sizeTiles     = m_sizePixels >> CR_TILE_LOG2;
+  m_numTiles      = m_sizeTiles.x * m_sizeTiles.y;
+  m_sizeBins      = (m_sizeTiles + CR_BIN_SIZE - 1) >> CR_BIN_LOG2;
+  m_numBins       = m_sizeBins.x * m_sizeBins.y;
+  m_numSamples    = 1;//
+  m_samplesLog2   = 0;//
+}
+
+void CudaRaster::deferredClear(F32 depth)
+{
+  m_deferredClear = true;
+  m_clearDepth = encodeDepth((U32)min((U64)(depth * exp2(32)), (U64)FW_U32_MAX));
+}
+
+#endif
+
 void CudaRaster::setSurfaces(CudaSurface* color, CudaSurface* depth)
 {
   m_colorBuffer = color;
@@ -1174,12 +1211,15 @@ void CudaRaster::emulateCoarseRaster(void)
 
     for (int i = 0; i < m_numTiles; i++)
     {
-        if (currSeg[i] == -1 && m_deferredClear)
-            tileFirstSeg[i] = -1;
-        if (currSeg[i] != -1 || m_deferredClear)
-            activeTiles[atomics.numActiveTiles++] = i;
-		if (idxInSeg[i] != CR_TILE_SEG_SIZE)
-			tileSegCount[currSeg[i]] = idxInSeg[i];
+      if (currSeg[i] == -1 && m_deferredClear) {
+        tileFirstSeg[i] = -1;
+      }
+      if (currSeg[i] != -1 || m_deferredClear) {
+        activeTiles[atomics.numActiveTiles++] = i;
+      }
+      if (idxInSeg[i] != CR_TILE_SEG_SIZE) {
+        tileSegCount[currSeg[i]] = idxInSeg[i];
+      }
     }
 }
 
@@ -1188,7 +1228,7 @@ void CudaRaster::emulateCoarseRaster(void)
 void CudaRaster::emulateFineRaster(void)
 {
     // Initialize.
-
+    
     const U8*               vertexBuffer    = (const U8*)m_vertexBuffer->getPtr(m_vertexOfs);
     const CRTriangleHeader* triHeader       = (const CRTriangleHeader*)m_triHeader.getPtr();
     const CRTriangleData*   triData         = (const CRTriangleData*)m_triData.getPtr();

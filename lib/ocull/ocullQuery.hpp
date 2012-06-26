@@ -1,12 +1,29 @@
+///
+///
+///
+///
+
 #ifndef OCULL_QUERY_HPP_
 #define OCULL_QUERY_HPP_
 
+#include "ocullCamera.hpp"
+#include "ocullContext.hpp"
+#include "ocullDefs.hpp"
+
+namespace FW {
+class CudaSurface;
+}
+
 namespace ocull {
+
+class Scene;
+class Mesh;
 
 class Query
 {
   private:
-    ocull::DepthBuffer *m_DepthBuffer;
+    Context &m_context;
+    FW::CudaSurface *m_DepthBuffer;
     
     struct Stats 
     {    
@@ -19,19 +36,23 @@ class Query
     } m_stats;
     
     // States
-    oql::Camera *m_pCamera;
+    const ocull::Camera *m_pCamera;
     bool m_bHasBegun;
     
 
   public:
     Query(Context &context)
-        : m_DepthBuffer(NULL)
+        : m_context(context),
+          m_DepthBuffer(NULL),
+          m_pCamera(NULL),
+          m_bHasBegun(false)
     {
       //context.addQuery(this);
       resetStats();
     }
     
     ~Query();
+    
 
     // Resize the depth buffer
     void resize(unsigned int w, unsigned int h);
@@ -40,14 +61,14 @@ class Query
     void begin(const ocull::Camera &camera, 
                const ocull::DepthBuffer *pDepthBuffer=NULL);
     void end();
-
+    
     void uploadScene(const ocull::Scene &scene);
     void uploadMesh(const ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
-
+    
     /// +++ GETTERS +++
     void getSamplesPassed(unsigned int *samplesPassed);
     void getSamplesPassed(unsigned int *samplesPassed, size_t count);
-        
+    
     void getDepthBuffer(ocull::DepthBuffer *depthBuffer);
 
     //TODO

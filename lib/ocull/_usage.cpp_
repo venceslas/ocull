@@ -50,7 +50,7 @@ int main(void)
   
   //g_Query = new ocull::Query( ocullContext );
   g_Query = ocullContext.createQuery();  
-  
+  g_Query->resize( ENGINE.ScreenWidth(), ENGINE.ScreenHeight() );
     
   /// 2) Camera  
   g_camera.frustum = ocull::Frustum( _fov, _aspectRatio, _zNear, _zFar);

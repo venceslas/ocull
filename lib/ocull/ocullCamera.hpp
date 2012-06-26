@@ -1,9 +1,18 @@
+///
+///
+///
+///
+
 #ifndef OCULL_CAMERA_HPP_
 #define OCULL_CAMERA_HPP_
 
+#include "ocullDefs.hpp"
+
+
 namespace ocull {
 
-struct Frustum {
+struct Frustum 
+{
   float left;
   float right;
   float bottom;
@@ -25,21 +34,27 @@ struct Frustum {
   }
 };
 
-struct DepthBuffer {
+
+// Structure to holds depth buffer output.
+// TODO redefines more precisely
+struct DepthBuffer 
+{
   struct Desc {
     unsigned int width;
     unsigned int height;
     //Format format;
   } desc;
   
-  void *depth;  
+  void *depth;
 };
 
-struct Camera {
+
+struct Camera 
+{
   Frustum frustum;
   Matrix4x4 viewMatrix;
 
-  Camera( const Frustum& frustum, const Ocull::Matrix4x4& viewMatrix);
+  Camera( const Frustum& frustum, const Matrix4x4& viewMatrix);
 };
 
 } //namespace ocull

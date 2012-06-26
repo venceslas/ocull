@@ -177,7 +177,7 @@ class CudaRaster
                         const Vec4f& v0, const Vec4f& v1, const Vec4f& v2, 
                         const Vec2f& b0, const Vec2f& b1, const Vec2f& b2,
                         const Vec3i& vidx);
-
+    
     void emulateTriangleSetup(void);
     void emulateBinRaster(void);
     void emulateCoarseRaster(void);
