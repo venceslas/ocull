@@ -26,7 +26,7 @@ namespace app {
 
 void UserInterface::init()
 {
-  m_font = gltext::Font("./data/arialbd.ttf", 16, 128);
+  m_font = gltext::Font("./data/font/arialbd.ttf", 16, 128);
   m_bInitialized = true;
   
   print_help();

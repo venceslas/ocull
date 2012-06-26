@@ -129,7 +129,7 @@ void VertexBuffer::complete(GLenum usage)
 
 void VertexBuffer::bind() const
 {
-  assert( m_vao != 0 );
+  //assert( m_vao != 0 );
   glBindVertexArray( m_vao );
 }
 
@@ -139,8 +139,7 @@ void VertexBuffer::unbind()
 }
 
 void VertexBuffer::enable() const
-{ 
-  
+{
   bind();
   
   if (m_positionSize != 0)  glEnableVertexAttribArray( VATTRIB_POSITION );

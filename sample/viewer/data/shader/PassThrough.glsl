@@ -42,18 +42,22 @@ layout(location = 0) out vec4 fragColor;
 
 // UNIFORM
 uniform vec3 uColor = vec3( 1.0f, 0.0f, 0.0f);
-
+uniform bool uEnableLight = true;
 
 void main()
 {
-  // Simple diffuse light model
-  const vec3 lightDirection = normalize(vec3(-1.0f, 1.0f, 1.0f));
-  
-  vec3 normal = (gl_FrontFacing) ? vNormal : -vNormal;
-       normal = normalize(normal);
-  
-  float diffuse = max( 0.1f, dot( normal, lightDirection));
+  float diffuse = 1.0f;
 
+  // Simple diffuse light model
+  if (uEnableLight)
+  {
+    const vec3 lightDirection = normalize(vec3(-1.0f, 1.0f, 1.0f));
+    
+    vec3 normal = (gl_FrontFacing) ? vNormal : -vNormal;
+         normal = normalize(normal);  
+   
+    diffuse = max( 0.1f, dot( normal, lightDirection));
+  }
   
   fragColor = vec4( diffuse*uColor, 1.0f);
 }

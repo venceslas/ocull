@@ -221,7 +221,7 @@ void Scene::run(Data &data)
   engine::Camera &mainCamera = data.view.camera[Data::View::CAMERA_MAIN];
   engine::Camera &debugCamera = data.view.camera[Data::View::CAMERA_DEBUG];
 
-  // TODO better customisation
+  // TODO better customization
   if (data.ui.displayMode == Data::UI::DISPLAY_SPLITTED)
   {    
     //TODO change the projection matrix, or resize the window
@@ -285,21 +285,13 @@ void Scene::render(const engine::Camera& camera)
                                               mat->diffuseColor[2]));
     m_program.setUniform( "uEnableLight", true);
     
+    // too much VAO created ?
     p->draw();
+    
+    //printf("%d\n", glGetError());
   }
 
   m_program.unbind();
-  
-#if 0
-  if (cameraType == CAMERA_DEBUG)
-  {
-    // Render the main frustum
-    if (data.ui.bShowMainFrustum)
-    {
-      renderMainFrustum(camera);
-    }
-  }
-#endif
 }
 
 void Scene::renderMainFrustum(const engine::Camera &mainCamera,
