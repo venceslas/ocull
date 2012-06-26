@@ -16,28 +16,28 @@ class CudaSurface;
 
 namespace ocull {
 
-class Scene;
-class Mesh;
+struct Scene;
+struct Mesh;
 
 class Query
 {
   private:
-    Context &m_context;
+    Context &m_context;//
+    
     FW::CudaSurface *m_DepthBuffer;
+    
+    const ocull::Camera *m_pCamera;//
+    bool m_bHasBegun;//
     
     struct Stats 
     {    
       std::vector<unsigned int> samplesPassed;
-      unsigned int numObjects;
-      unsigned int numObjectsPassed;
-      unsigned int numTriangles;
-      unsigned int numTrianglesPassed;      
+      unsigned int objectCount;
+      unsigned int objectPassedCount;
+      unsigned int triangleCount;
+      unsigned int trianglePassedCount;      
       float queryTime;
     } m_stats;
-    
-    // States
-    const ocull::Camera *m_pCamera;
-    bool m_bHasBegun;
     
 
   public:
@@ -62,8 +62,8 @@ class Query
                const ocull::DepthBuffer *pDepthBuffer=NULL);
     void end();
     
-    void uploadScene(const ocull::Scene &scene);
-    void uploadMesh(const ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
+    void uploadScene(ocull::Scene &scene);
+    void uploadMesh(ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
     
     /// +++ GETTERS +++
     void getSamplesPassed(unsigned int *samplesPassed);

@@ -1,3 +1,7 @@
+///
+///   This sample file was just for the lib to compile (to test minor code error)
+///
+
 #include <cstdio>
 #include <cstdlib>
 

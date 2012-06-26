@@ -40,18 +40,18 @@ int main(void)
   // window's context, CUDA init, ..
   ENGINE.init();
   
-
+  
   /// A - Init -------------
   
   /// 1) Context & Query
   ocull::Context ocullContext;
-    
+  
   ocullContext.init();
   
   //g_Query = new ocull::Query( ocullContext );
   g_Query = ocullContext.createQuery();  
   g_Query->resize( ENGINE.ScreenWidth(), ENGINE.ScreenHeight() );
-    
+  
   /// 2) Camera  
   g_camera.frustum = ocull::Frustum( _fov, _aspectRatio, _zNear, _zFar);
   g_camera.viewMatrix = ENGINE.CAMERA.getViewMatrix();   
@@ -59,8 +59,8 @@ int main(void)
   // optionally set a default depth buffer
   g_depth = ocull::DepthBuffer( ENGINE.getDepthBuffer() );  
   
-      
-  /// 3) Scene  
+  
+  /// 3) Scene
   // geometry
   for (size_t i=0u; i<ENGINE.getNumMesh(); ++i) {
     g_scene.insertMesh( ocull::Mesh(ENGINE.model[i].getMesh()) );

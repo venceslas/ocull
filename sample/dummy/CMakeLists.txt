@@ -25,17 +25,16 @@ add_library( GLEW ${glew} )
 INCLUDE_DIRECTORIES( ${THIRDPARTIES} )
 
 
-INCLUDE_DIRECTORIES( /usr/local/cuda/include )
 INCLUDE_DIRECTORIES( ${OCULLDIR} )
 
+INCLUDE_DIRECTORIES( /usr/local/cuda/include )
 INCLUDE( FindCUDA )
-
-SET( Libraries GL glut m )
 LINK_LIBRARIES( "-L/usr/lib/nvidia-current -lcuda" )
-
 
 # removing a warning added with cuda 4.2
 SET( CMAKE_CXX_FLAGS "-Wno-conversion-null")
+
+SET( Libraries GL glut m )
 
 
 CUDA_ADD_EXECUTABLE( ${CMAKE_PROJECT_NAME} 

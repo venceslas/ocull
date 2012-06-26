@@ -32,31 +32,35 @@ struct Mesh
     size_t size;
   } index;
   
+  
   //
-  Mesh( GLuint vbo, size_t vertOffset, size_t numElems, size_t stride,
-        GLuint ibo, size_t triOffset, size_t numTri)
+  
+  Mesh( GLuint vbo, size_t vertOffset, size_t vertexCount, size_t stride,
+        GLuint ibo, size_t triOffset, size_t indexCount)
   {
     vertex.buffer.wrapGL(vbo);
     vertex.offset = vertOffset;
-    vertex.size = numElems;
+    vertex.size = vertexCount;
     vertex.stride = stride;
     
     index.buffer.wrapGL(ibo);
     index.offset = triOffset;
-    index.size = numTri;//
+    index.size = indexCount;//
   }
-  //
-  Mesh( float *vertices, size_t numElems,
-        unsigned int *indices, size_t numTri)
+  
+  Mesh( float *vertices, size_t vertexCount,
+        unsigned int *indices, size_t indexCount)
   {
   }
+  
+  unsigned int getTriangleCount() const { return index.size / 3u; }
 };
 
 
 //typedef meshIdx_t unsigned int;
 
 //
-class Scene 
+struct Scene 
 {
   /// [ Geometric datas ]
   std::vector<ocull::Mesh> meshes;
@@ -74,8 +78,7 @@ class Scene
   //--
   
   unsigned int insertMesh( const ocull::Mesh &mesh );//
-  void insertModel( unsigned int meshId, Matrix4x4 worldMatrix);//
-      
+  void insertModel( unsigned int meshId, Matrix4x4 worldMatrix);//      
   void reset();//
   
 };

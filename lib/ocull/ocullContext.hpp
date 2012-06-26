@@ -1,6 +1,6 @@
 ///
 ///   
-///
+///     ~~ not great, rethink it ~~
 ///
 
 #ifndef OCULL_CONTEXT_HPP_
@@ -15,8 +15,8 @@
 
 namespace ocull {
 
-class Mesh;
-class Query;
+struct Mesh;
+struct Query;
 
 class Context
 {  
@@ -37,12 +37,13 @@ class Context
     // rasterizer yet.
     FW::CudaSurface *m_colorBuffer;
   
-
+  
   public:
     Context()
       : m_CudaModule(NULL),
         m_colorBuffer(NULL)
     {}
+    
     ~Context();
     
     // (calls resize for each query ?)
@@ -51,17 +52,18 @@ class Context
     /// Load the preprocessed Pipeline, or compiles it if needed.
     /// Must be call after the window's context & CUDA has been initialized.
     void init();
-    
-    /// ~
-    /// Transform mesh data from object to clip space to be send through the
-    /// pipeline.
-    /// New vertices positions are stored into m_csVertices, which is shared
-    /// by all queries using the same context.
-    void objectToClipSpace( const ocull::Mesh &mesh, 
-                            const ocull::Matrix4x4 &mvp);
-
+  
+    //
+    GLuint DEBUG_getColorTex() {return (m_colorBuffer)?m_colorBuffer->getGLTexture():0u;}//
+    //
+  
   private:
+    /// set the depthBuffer surface used by the rasterizer and cleared it.
     void setRasterizerParams(FW::CudaSurface *depthBuffer);
+    
+    /// Transform the mesh data to clip space then send it through the 
+    /// rasterizer pipeline.
+    void uploadMesh(ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
 };
 
 } //namespace ocull

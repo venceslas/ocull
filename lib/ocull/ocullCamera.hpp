@@ -11,6 +11,7 @@
 
 namespace ocull {
 
+// TODO assert projMatrix match the depth buffer resolution (right aspect ratio)
 struct Frustum 
 {
   float left;
@@ -23,6 +24,10 @@ struct Frustum
   Matrix4x4 projectionMatrix;
   
   //--
+  Frustum() 
+      : left(-1.0f), right(1.0f), bottom(-1.0f), top(1.0f), 
+        near(0.1f), far(1000.0f)
+  {}
   
   Frustum(float fov, float aspectRatio, float zNear, float zFar)
   {
@@ -53,8 +58,6 @@ struct Camera
 {
   Frustum frustum;
   Matrix4x4 viewMatrix;
-
-  Camera( const Frustum& frustum, const Matrix4x4& viewMatrix);
 };
 
 } //namespace ocull

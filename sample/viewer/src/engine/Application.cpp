@@ -10,10 +10,7 @@
 
 #include <GL/glew.h>
 
-
-#if ENABLE_CUDA
 #include <cuda.h>
-#endif
 
 
 
@@ -62,13 +59,11 @@ void Application::_initOpenGL( int argc, char *argv[])
 
 void Application::_initCUDA( int argc, char *argv[])
 {
-#if ENABLE_CUDA
   if (CUDA_SUCCESS != cuInit(0))
   {
     fprintf( stderr, "Error: CUDA initialization failed.\n");
     exit( EXIT_FAILURE );
   }
-#endif
 }
 
 void Application::_initData( int argc, char *argv[])

@@ -4,6 +4,13 @@ project( ocull_viewer )
 
 set( THIRDPARTIES ${CMAKE_SOURCE_DIR}/thirdparty )
 
+# ocull
+SET( OCULLDIR ${CMAKE_SOURCE_DIR}/../../lib )
+FILE( GLOB_RECURSE Headers_ocull ${OCULLDIR}/*.hpp )
+      
+FILE( GLOB_RECURSE Sources_ocull ${OCULLDIR}/*.cpp )
+      
+
 #
 # drone lib file set
 #
@@ -59,15 +66,30 @@ file( GLOB_RECURSE Sources
 
 include_directories( ${THIRDPARTIES} )
 include_directories( src )
+include_directories( ${OCULLDIR} )
 
 set( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR} )
+
+
+#
+# CUDA
+#
+INCLUDE_DIRECTORIES( /usr/local/cuda/include )
+INCLUDE( FindCUDA )
+LINK_LIBRARIES( "-L/usr/lib/nvidia-current -lcuda" )
+
+# removing a warning added with cuda 4.2
+SET( CMAKE_CXX_FLAGS "-Wno-conversion-null")
+
+
 
 #
 # viewer
 #
-add_executable(viewer 
-               ${drone_lib_files} ${drone_scene_lib_files}
-               ${Sources} ${Headers})
+cuda_add_executable( viewer 
+                     ${drone_lib_files} ${drone_scene_lib_files}
+                     ${Sources} ${Headers}
+                     ${Sources_ocull} ${Headers_ocull})
 
 target_link_libraries(viewer 
                       sfml-window ${GLTEXT_LIBRARIES} GLU GL GLEW GLSW )

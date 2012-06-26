@@ -9,6 +9,7 @@
 #include "engine/VertexBuffer.hpp"
 #include "engine/Program.hpp"
 
+#include <ocull/ocull.hpp> //
 
 
 namespace engine {
@@ -38,7 +39,15 @@ class Scene
     
     engine::Program m_program;
     
-        
+    ///    
+    ocull::Context m_ocullContext;
+    ocull::Query *m_ocullQuery;
+    ocull::Camera m_ocullCamera;
+    ocull::Mesh *m_ocullMesh;
+    ///
+    
+  
+  
   public:
     Scene();
     ~Scene();

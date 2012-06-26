@@ -10,6 +10,57 @@
 #include "engine/VertexBuffer.hpp"
 
 
+// XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~
+namespace {
+
+void DEBUG_ScreenMapping(const GLuint texId)
+{
+  static bool bInit = false;
+  
+  GLuint vao;
+  engine::Program ps;
+  
+  if (!bInit)
+  {
+    glGenVertexArrays( 1, &vao); 
+    
+    glswInit();
+    glswSetPath( "data/shader/", ".glsl");
+    glswAddDirectiveToken("*", "#version 330 core");  
+    
+    ps.generate();
+      ps.addShader( engine::VERTEX_SHADER,   "ScreenMapping.Vertex");
+      ps.addShader( engine::FRAGMENT_SHADER, "ScreenMapping.Fragment");
+    ps.link();
+    
+    glswShutdown();
+    
+    bInit = true;
+  }
+  
+  glClear(GL_COLOR_BUFFER_BIT);
+  glDisable( GL_DEPTH_TEST );
+  glDepthMask( GL_FALSE );
+  
+  ps.bind();
+  {
+    ps.setUniform( "uTexture", 0);
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, texId);
+
+    glBindVertexArray( vao );
+    glDrawArrays( GL_TRIANGLES, 0, 3);
+    glBindVertexArray( 0u );
+
+    glBindTexture( GL_TEXTURE_2D, 0u);
+  }
+  ps.unbind();
+}
+
+}
+// XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~
+
+
 namespace app {
 
 namespace cubewire {
@@ -45,7 +96,7 @@ void Scene::init(const char *filename)
 {
   initGeometry(filename);
   initShader();
-  initQuery();  
+  initQuery();
 }
 
 void Scene::initGeometry(const char *filename)
@@ -117,6 +168,16 @@ void Scene::initShader()
 
 void Scene::initQuery()
 {
+  // trashy mode
+  
+  m_ocullContext.init();
+  
+  m_ocullQuery = new ocull::Query( m_ocullContext );
+  m_ocullQuery->resize( 1280, 720); // 
+  
+  // TODO set camera frustum..
+
+  // mesh set in updateGeometry
 }
 
 
@@ -172,18 +233,20 @@ void Scene::updateGeometry()
       std::vector<GLuint> &indices = p->getIndices();
       indices.assign( m->triangleList, &(m->triangleList[3*m->numTriangles]) );
 
-
-      ///----
-      
-      /// setup Ocull Scene
-      
-      // TODO
-      
-      ///----
             
       p->generate();//
       p->complete( GL_STATIC_DRAW ); //
       p->cleanData();
+
+
+      ///----
+      
+      /// setup Ocull Scene
+      m_ocullMesh = new ocull::Mesh( p->getVBO(), 0u, p->getNumVertices(), 0u,
+                                 p->getIBO(), 0u, p->getNumIndices());
+      
+      ///----
+
       
       m_meshInit[i] = true;
     }
@@ -203,6 +266,22 @@ void Scene::run(Data &data)
   // UPDATE  
   
   updateGeometry();
+  
+  
+  //query XXX
+  m_ocullCamera.frustum.projectionMatrix = data.view.camera[data.view.active].getProjectionMatrix();
+  m_ocullCamera.viewMatrix = data.view.camera[data.view.active].getViewMatrix();
+  
+  ocull::Matrix4x4 identity;
+  
+  m_ocullQuery->begin( m_ocullCamera );
+    m_ocullQuery->uploadMesh( *m_ocullMesh, identity);
+  m_ocullQuery->end();
+  
+  
+  DEBUG_ScreenMapping( m_ocullContext.DEBUG_getColorTex() );
+  return;
+  // XXX
   
   ///-----------
 
@@ -285,7 +364,7 @@ void Scene::render(const engine::Camera& camera)
                                               mat->diffuseColor[2]));
     m_program.setUniform( "uEnableLight", true);
     
-    // too much VAO created ?
+    // bug with large scene: too much VAOs created ?
     p->draw();
     
     //printf("%d\n", glGetError());

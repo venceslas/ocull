@@ -97,38 +97,37 @@ void Query::end()
 ///----------------------
 
 
-void Query::uploadScene(const ocull::Scene &scene)
+void Query::uploadScene(ocull::Scene &scene)
 {
   assert( m_bHasBegun );
   
+  fprintf( stderr, "%s : not implemented yet\n", __FUNCTION__);
   
 }
 
 
-void Query::uploadMesh(const ocull::Mesh &mesh, 
+void Query::uploadMesh(ocull::Mesh &mesh, 
                        const ocull::Matrix4x4 &worldMatrix)
 {
   assert( m_bHasBegun );
   
-  /*
+  
   /// Update stats
-  m_stats.numObjects += 1u;
-  m_stats.numTriangles += mesh.getNumTriangles();//
+  m_stats.objectCount += 1u;
+  m_stats.trianglePassedCount += mesh.getTriangleCount();//
   
-  
-  /// Transform to clip space TODO  
-  rasterizer.objectToClipSpace(..); //
+  // TODO: precompute the view proj
+  Matrix4x4 mvp = m_pCamera->frustum.projectionMatrix * 
+                  m_pCamera->viewMatrix *
+                  worldMatrix;
   
   /// Send to the rasterizer
-  //rasterizer.setVertexBuffer( &vertices, 0);
-  rasterizer.setIndexBuffer( &indices, 0, numTriangles);
-  rasterizer.drawTriangles();
-  */
+  m_context.uploadMesh( mesh, mvp);  
 }
                         
 
-
 ///----------------------
+
 
 
 void Query::getSamplesPassed(unsigned int *samplesPassed)
@@ -152,7 +151,7 @@ void Query::getSamplesPassed(unsigned int *samplesPassed, size_t count)
 {
   assert( !m_bHasBegun );
    
-  if (m_stats.numObjects == 0u) {
+  if (m_stats.objectCount == 0u) {
     return;
   }
   
@@ -165,17 +164,18 @@ void Query::getSamplesPassed(unsigned int *samplesPassed, size_t count)
 }
     
 void Query::getDepthBuffer(ocull::DepthBuffer *depthBuffer)
-{
+{  
   assert( m_DepthBuffer != NULL );
-    
   
   fprintf( stderr, "%s not implemented yet\n", __FUNCTION__ );
   
+  /*
   if (depthBuffer == NULL) {
     return;
   }
   
   // TODO
+  */
 }
 
 
@@ -206,10 +206,10 @@ void Query::resetStats()
     m_stats.samplesPassed.assign( m_stats.samplesPassed.size(), 0u);
   }
   
-  m_stats.numObjects = 0u;
-  m_stats.numObjectsPassed = 0u;
-  m_stats.numTriangles = 0u;
-  m_stats.numTrianglesPassed = 0u;
+  m_stats.objectCount = 0u;
+  m_stats.objectPassedCount = 0u;
+  m_stats.triangleCount = 0u;
+  m_stats.trianglePassedCount = 0u;
   m_stats.queryTime = 0.0f;
 }
 
