@@ -1,0 +1,37 @@
+
+
+ocull::Context *context;
+
+context = ocull::Context::Create( "pipe.cubin" );
+
+//---------------------------------------
+
+ocull::Query query( w, h);
+
+query.setCamera(..);
+query.setDepthBuffer(..);
+//or query.setParams(..);
+
+query.resize( w, h);
+
+context->begin( &query );
+  context->upload( .. );
+context->end();
+
+query.getResults();
+
+
+//---------------------------------------
+
+ocull::Context::Release( context );
+
+
+
+
+///------------------------------------------
+
+
+ TODO
+ 
+ Un programme 'pipe-compiler' qui compile un cache de la pipeline cuda,
+ pour ne pas avoir a le gérer dans l'appli.
