@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "rasterizer/framework/gpu/CudaModule.hpp"
+#include "rasterizer/shader/PassThrough.hpp"       // kernel shader
 #include "ocullQuery.hpp"
 #include "ocullScene.hpp"
 
@@ -19,16 +21,18 @@ namespace ocull {
 // STATIC methods  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
 
-Context::Context* Create(const std::string &pipeCubinFile)
+Context* Context::Create(const std::string &pipeCubinFile)
 {
   Context *context = new Context();
   
   
+  // --------
+  
   /// Load the precompiled pipeline shaders
   
-  m_cudaModule = new CudaModule(pipeCubinFile);
+  context->m_cudaModule = new FW::CudaModule(pipeCubinFile);
   
-  if (NULL == m_cudaModule) 
+  if (NULL == context->m_cudaModule) 
   {
     std::cerr << __FUNCTION__ 
               << " : invalid argument \""  << pipeCubinFile << "\"."
@@ -39,14 +43,16 @@ Context::Context* Create(const std::string &pipeCubinFile)
   
   /// Initialized CudaRaster
   
-  m_rasterizer.init();
+  context->m_rasterizer.init();
   
   // Vertex shader
   size_t paramSize = 1u * sizeof(FW::U32) + 2u * sizeof(CUdeviceptr);
-  m_vsKernel = m_CudaModule->getKernel( "vertexShader_passthrough", paramSize);
+  context->m_vsKernel = context->m_cudaModule->getKernel( "vertexShader_passthrough", paramSize);
   
   // Pipeline
-  m_rasterizer.setPixelPipe( m_CudaModule, "PixelPipe_passthrough");
+  context->m_rasterizer.setPixelPipe( context->m_cudaModule, "PixelPipe_passthrough");
+  
+  // --------
   
   
   return context;
@@ -73,16 +79,17 @@ void Context::begin(Query *pQuery)
   /// Set rasterizer parameters
   
   //---  
-  // [TEMPORARY] Reset the color buffer (costly !)
+  // [TEMPORARY] Reset the color buffer (costly !)  
   
-  FW::Vec2i bufferSize = pQuery->m_depthBuffer->getSize();
-      
-  if (m_colorBuffer != NULL) {
-    if ((bufferSize.x != width) || (bufferSize.y != height)) {
+  FW::Vec2i depthSize = pQuery->m_depthBuffer->getSize();
+  
+  if (m_colorBuffer != NULL) 
+  {
+    if (depthSize != m_colorBuffer->getSize()) {
       delete m_colorBuffer;
     }
   }  
-  m_colorBuffer = new FW::CudaSurface( bufferSize, 
+  m_colorBuffer = new FW::CudaSurface( depthSize, 
                                        FW::CudaSurface::FORMAT_RGBA8, 
                                        1u);
   
@@ -136,24 +143,25 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   
   
   /// Update simple stats
-  Query::Result &result = m_pQuery->result;
+  Query::Result &result = m_pQuery->m_result; //
   result.objectCount += 1u;
   result.trianglePassedCount += pMesh->getTriangleCount();
   
   /// Compute the ModelViewProjection matrix
-  const Matrix4x4 &viewProj = m_pQuery->camera.getViewProjMatrix();
+  const Matrix4x4 &viewProj = m_pQuery->m_pCamera->getViewProjMatrix();
   Matrix4x4 mvp = viewProj * modelMatrix;
-    
   
-  // resize the output vertices buffer
-  size_t csVertexSize = mesh.vertex.size * sizeof(FW::ShadedVertex_passthrough);
-  m_csVertices.resizeDiscard( csVertexSize );  
-    
-  // Map constants (kind of GLSL's uniforms) parameters
+  
+  /// Resize the output vertices buffer
+  size_t vertexSize = pMesh->vertex.count * sizeof(FW::ShadedVertex_passthrough);
+  m_outVertices.resizeDiscard( vertexSize );  
+  
+  
+  /// Map constants (kind of GLSL's uniforms) parameters
   FW::Constants& c = *(FW::Constants*)
-                      m_CudaModule->getGlobal("c_constants").getMutablePtrDiscard();
+                      m_cudaModule->getGlobal("c_constants").getMutablePtrDiscard();
   
-  // Translate custom matrix as CudaRaster Framework matrix (yeah.. what ?)
+  /// Translate custom matrix as CudaRaster Framework matrix (yeah.. what ?)
 # define COPY_MAT(i,j)  c.posToClip.m##i##j = mvp[j][i]
   COPY_MAT(0, 0); COPY_MAT(0, 1); COPY_MAT(0, 2); COPY_MAT(0, 3);
   COPY_MAT(1, 0); COPY_MAT(1, 1); COPY_MAT(1, 2); COPY_MAT(1, 3);
@@ -163,6 +171,7 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   
   
   std::cerr << __FUNCTION__ << " : unfinished." << std::endl;
+  
   
   // Not sure at all for this, I think I have to sent the vbo's with getGLPtr() or something
   /**

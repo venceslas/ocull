@@ -9,16 +9,21 @@
 #include <vector>
 
 #include "ocullDefs.hpp"
+#include "ocullCamera.hpp"
 
-namespace FW    { class CudaSurface; }
-namespace ocull { class Camera; }
-
+namespace FW { 
+class CudaSurface; 
+}
 
 
 namespace ocull {
 
+class Context;
+
 class Query
 {
+  friend class Context;//
+  
   public:
     struct Result
     {    
@@ -32,7 +37,7 @@ class Query
   
   
   private:
-    Camera *m_pCamera;
+    Camera *m_pCamera;//
     FW::CudaSurface *m_depthBuffer;
     
     Result m_result;

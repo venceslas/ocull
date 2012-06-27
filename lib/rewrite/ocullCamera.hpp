@@ -9,47 +9,50 @@
 
 #include "ocullDefs.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace ocull {
 
 struct Frustum
 {
-  float left;
-  float right;
-  float bottom;
-  float top;
-  float zNear;
-  float zFar; 
-  
-  Matrix4x4 projectionMatrix; 
+  public:
+    float left;
+    float right;
+    float bottom;
+    float top;
+    float zNear;
+    float zFar; 
+    
+    Matrix4x4 projectionMatrix; 
   
   
   // +++ Constructor +++
-  
-  Frustum() 
-      : Frustum( -1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 1000.0f)
-  {}
+  public:
+    Frustum() 
+      //  : Frustum( -1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 1000.0f)
+    {}  
+      
+    Frustum(float fov_, float aspectRatio_, float zNear_, float zFar_)
+        : zNear(zNear_),
+          zFar(zFar_)
+    {
+      projectionMatrix = glm::perspective( fov_, aspectRatio_, zNear, zFar);      // ~ xxx
+      
+      // TODO set l, r, b, t
+    }
     
-  Frustum(float fov_, float aspectRatio_, float zNear_, float zFar_)
-      : zNear(zNear_),
-        zFar(zFar_)
-  {
-    projectionMatrix = glm::perspective( fov_, aspectRatio_, zNear, zFar);      // ~ xxx
-    
-    // TODO set l, r, b, t
-  }
-  
-  Frustum(float left_, float right_, float bottom_, float top_, 
-          float zNear_, float zFar_)
-      : left(left_), 
-        right(right_), 
-        bottom(bottom_), 
-        top(top_),
-        zNear(zNear_), 
-        zFar(zFar_)
-  {
-    projectionMatrix = glm::frustum( left, right, bottom, top, zNear, zFar);    // ~ xxx
-  }  
+    Frustum(float left_, float right_, float bottom_, float top_, 
+            float zNear_, float zFar_)
+        : left(left_), 
+          right(right_), 
+          bottom(bottom_), 
+          top(top_),
+          zNear(zNear_), 
+          zFar(zFar_)
+    {
+      projectionMatrix = glm::frustum( left, right, bottom, top, zNear, zFar);    // ~ xxx
+    }  
+
 };
 
 
@@ -86,7 +89,7 @@ class Camera
     
     inline const Matrix4x4& getViewMatrix() const { return m_viewMatrix; }
     
-    inline const Matrix4x4& getViewProjMatrix() const
+    inline const Matrix4x4& getViewProjMatrix()
     {
       if (m_bRebuild)
       { 

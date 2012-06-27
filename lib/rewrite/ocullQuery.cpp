@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "rasterizer/CudaSurface.hpp"
-
+#include "rasterizer/cuda/Constants.hpp"  // for CR_TILE_SIZE
 
 
 namespace ocull {
@@ -38,18 +38,18 @@ void Query::resize(unsigned int width, unsigned int height)
   }
   
   // Recreate the buffer only if it has changed
+  FW::Vec2i bufferSize( width, height);
+  
   if (m_depthBuffer != NULL)
-  {
-    FW::Vec2i bufferSize = m_depthBuffer->getSize();    
-    
-    if ((bufferSize.x == width) && (bufferSize.y == height)) {
+  {    
+    if (bufferSize == m_depthBuffer->getSize()) {
       return;
     }
     
     delete m_depthBuffer;
   }
   
-  m_DepthBuffer = new FW::CudaSurface( FW::Vec2i(w, h), 
+  m_depthBuffer = new FW::CudaSurface( bufferSize, 
                                        FW::CudaSurface::FORMAT_DEPTH32 );
 }
 
@@ -74,6 +74,4 @@ void Query::resetResults()
   m_result.queryTime = 0.0f;
 }
     
-};
-
 } //namespace ocull

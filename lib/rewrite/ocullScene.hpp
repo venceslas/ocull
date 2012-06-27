@@ -20,20 +20,20 @@ namespace ocull {
 struct Mesh
 {
   public:
-  struct Vertex
-  {
-    FW::Buffer buffer;
-    size_t offset;
-    size_t count;
-    size_t stride;//
-  } vertex;
+    struct Vertex
+    {
+      FW::Buffer buffer;
+      size_t offset;
+      size_t count;
+      size_t stride;//
+    } vertex;
 
-  struct Index
-  {
-    FW::Buffer buffer;
-    size_t offset;
-    size_t count;
-  } index;
+    struct Index
+    {
+      FW::Buffer buffer;
+      size_t offset;
+      size_t count;
+    } index;
   
   
   public:
@@ -54,14 +54,14 @@ struct Scene
 {
   public:
     /// [ Geometric datas ]
-#   if OCULLSCENE_CACHE_FRIENDLY
+#   if !(OCULLSCENE_CACHE_FRIENDLY)
     std::vector<ocull::Mesh> meshes;
 #   else
     // (supposed) more cache efficient
     std::vector<FW::Buffer> vertices;
     std::vector<FW::Buffer> indices;
-    std::vector<FW::Vec3ui> vertexParams;
-    std::vector<FW::Vec2ui> indexParams;
+    std::vector<FW::Vec3i>  vertexParams;
+    std::vector<FW::Vec2i>  indexParams;
 #   endif
 
     /// [ per Instance attributes ]
