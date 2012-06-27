@@ -1,0 +1,1 @@
+./cubinPipeCompiler ../../lib/ocull/rasterizer/ ../../lib/ocull/rasterizer/shader/PassThrough.cu
