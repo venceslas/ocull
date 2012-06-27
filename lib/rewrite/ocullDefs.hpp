@@ -15,6 +15,7 @@ namespace ocull {
 #if 1
 
 typedef glm::vec2  Vector2;
+typedef glm::ivec2 Vector2i;
 typedef glm::vec3  Vector3;
 typedef glm::ivec3 Vector3i;
 typedef glm::vec4  Vector4;
@@ -29,6 +30,11 @@ typedef glm::mat4  Matrix4x4;
 class Vector2
 {
   float x, y;
+};
+
+class Vector2i
+{
+  int x, y;
 };
 
 class Vector3
@@ -65,8 +71,10 @@ class Matrix4x4
   void operator=(const TypeName&)
 #endif // DISALLOW_COPY_AND_ASSIGN
 
+
 #ifndef OCULL_SAFEDELETE
 #define OCULL_SAFEDELETE(x) if (x) { delete x; x = NULL; }
 #endif //OCULL_SAFEDELETE
+
 
 #endif // OCULL_DEFS_HPP_
