@@ -24,7 +24,7 @@ Context::Context* Create(const std::string &pipeCubinFile)
   Context *context = new Context();
   
   
-  /// Try to load the precompiled pipeline shaders
+  /// Load the precompiled pipeline shaders
   
   m_cudaModule = new CudaModule(pipeCubinFile);
   
@@ -72,12 +72,17 @@ void Context::begin(Query *pQuery)
   
   /// Set rasterizer parameters
   
-  //---
+  //---  
   // [TEMPORARY] Reset the color buffer (costly !)
+  
+  FW::Vec2i bufferSize = pQuery->m_depthBuffer->getSize();
+      
   if (m_colorBuffer != NULL) {
-    delete m_colorBuffer;
-  }
-  m_colorBuffer = new FW::CudaSurface( pQuery->m_depthBuffer->getSize(), 
+    if ((bufferSize.x != width) || (bufferSize.y != height)) {
+      delete m_colorBuffer;
+    }
+  }  
+  m_colorBuffer = new FW::CudaSurface( bufferSize, 
                                        FW::CudaSurface::FORMAT_RGBA8, 
                                        1u);
   
@@ -144,7 +149,7 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   size_t csVertexSize = mesh.vertex.size * sizeof(FW::ShadedVertex_passthrough);
   m_csVertices.resizeDiscard( csVertexSize );  
     
-  // Map constants (ie, GLSL's uniforms) parameters
+  // Map constants (kind of GLSL's uniforms) parameters
   FW::Constants& c = *(FW::Constants*)
                       m_CudaModule->getGlobal("c_constants").getMutablePtrDiscard();
   
