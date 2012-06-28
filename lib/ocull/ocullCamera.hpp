@@ -1,6 +1,7 @@
 ///
+///   \file ocullCamera.hpp
 ///
-///
+///     
 ///
 
 #ifndef OCULL_CAMERA_HPP_
@@ -8,56 +9,95 @@
 
 #include "ocullDefs.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace ocull {
 
-// TODO assert projMatrix match the depth buffer resolution (right aspect ratio)
-struct Frustum 
+struct Frustum
 {
-  float left;
-  float right;
-  float bottom;
-  float top;  
-  float near;
-  float far;
+  public:
+    float left;
+    float right;
+    float bottom;
+    float top;
+    float zNear;
+    float zFar; 
+    
+    Matrix4x4 projectionMatrix; 
   
-  Matrix4x4 projectionMatrix;
   
-  //--
-  Frustum() 
-      : left(-1.0f), right(1.0f), bottom(-1.0f), top(1.0f), 
-        near(0.1f), far(1000.0f)
-  {}
-  
-  Frustum(float fov, float aspectRatio, float zNear, float zFar)
-  {
-  }
-  
-  Frustum(float left, float right, float bottom, float top, 
-          float zNear, float zFar)
-  {
-  }
+  // +++ Constructor +++
+  public:
+    Frustum() 
+      //  : Frustum( -1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 1000.0f)
+    {}  
+      
+    Frustum(float fov_, float aspectRatio_, float zNear_, float zFar_)
+        : zNear(zNear_),
+          zFar(zFar_)
+    {
+      projectionMatrix = glm::perspective( fov_, aspectRatio_, zNear, zFar);      // ~ xxx
+      
+      // TODO set l, r, b, t
+    }
+    
+    Frustum(float left_, float right_, float bottom_, float top_, 
+            float zNear_, float zFar_)
+        : left(left_), 
+          right(right_), 
+          bottom(bottom_), 
+          top(top_),
+          zNear(zNear_), 
+          zFar(zFar_)
+    {
+      projectionMatrix = glm::frustum( left, right, bottom, top, zNear, zFar);    // ~ xxx
+    }  
+
 };
 
 
-// Structure to holds depth buffer output.
-// TODO redefines more precisely
-struct DepthBuffer 
+class Camera
 {
-  struct Desc {
-    unsigned int width;
-    unsigned int height;
-    //Format format;
-  } desc;
+  private:
+    Frustum   m_frustum;
+    Matrix4x4 m_viewMatrix;
+    Matrix4x4 m_viewProjMatrix;
+    bool      m_bRebuild;
   
-  void *depth;
-};
-
-
-struct Camera 
-{
-  Frustum frustum;
-  Matrix4x4 viewMatrix;
+  public:
+    Camera() : m_bRebuild(true) {}
+    
+    
+    // +++ Setters +++
+    
+    inline void setFrustum(const Frustum& frustum)
+    {
+      m_frustum = frustum;
+      m_bRebuild = true;
+    }
+    
+    inline void setViewMatrix(const Matrix4x4& viewMatrix)
+    {
+      m_viewMatrix = viewMatrix;
+      m_bRebuild = true;
+    }
+    
+    
+    // +++ Getters +++
+    
+    inline const Frustum& getFrustum() const { return m_frustum; }
+    
+    inline const Matrix4x4& getViewMatrix() const { return m_viewMatrix; }
+    
+    inline const Matrix4x4& getViewProjMatrix()
+    {
+      if (m_bRebuild)
+      { 
+        m_viewProjMatrix = m_frustum.projectionMatrix * m_viewMatrix;
+        m_bRebuild = false;
+      }
+      return m_viewProjMatrix;
+    }
 };
 
 } //namespace ocull

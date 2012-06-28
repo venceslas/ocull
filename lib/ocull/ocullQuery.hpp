@@ -1,35 +1,33 @@
 ///
+///   \file ocullQuery.hpp
 ///
-///
+///   \note The way camera are stored may be modified later to let the users
+///         store them ans send them to the context with begin()
 ///
 
 #ifndef OCULL_QUERY_HPP_
 #define OCULL_QUERY_HPP_
 
-#include "ocullCamera.hpp"
-#include "ocullContext.hpp"
-#include "ocullDefs.hpp"
+#include <vector>
 
-namespace FW {
-class CudaSurface;
+#include "ocullDefs.hpp"
+#include "ocullCamera.hpp"
+
+namespace FW { 
+class CudaSurface; 
 }
+
 
 namespace ocull {
 
-struct Scene;
-struct Mesh;
+class Context;
 
 class Query
 {
-  private:
-    Context &m_context;//
-    
-    FW::CudaSurface *m_DepthBuffer;
-    
-    const ocull::Camera *m_pCamera;//
-    bool m_bHasBegun;//
-    
-    struct Stats 
+  friend class Context;//
+  
+  public:
+    struct Result
     {    
       std::vector<unsigned int> samplesPassed;
       unsigned int objectCount;
@@ -37,52 +35,53 @@ class Query
       unsigned int triangleCount;
       unsigned int trianglePassedCount;      
       float queryTime;
-    } m_stats;
-    
-
-  public:
-    Query(Context &context)
-        : m_context(context),
-          m_DepthBuffer(NULL),
-          m_pCamera(NULL),
-          m_bHasBegun(false)
-    {
-      //context.addQuery(this);
-      resetStats();
-    }
-    
-    ~Query();
-    
-
-    // Resize the depth buffer
-    void resize(unsigned int w, unsigned int h);
-    
-    /// +++ QUERY +++
-    void begin(const ocull::Camera &camera, 
-               const ocull::DepthBuffer *pDepthBuffer=NULL);
-    void end();
-    
-    void uploadScene(ocull::Scene &scene);
-    void uploadMesh(ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
-    
-    /// +++ GETTERS +++
-    void getSamplesPassed(unsigned int *samplesPassed);
-    void getSamplesPassed(unsigned int *samplesPassed, size_t count);
-    
-    void getDepthBuffer(ocull::DepthBuffer *depthBuffer);
-
-    //TODO
-    //void getQueryTime();
-    //void getNumObjects();
-    //void getNumPassed();
-    //void getNumTriangles();
-    //void getNumTrianglesPassed();
-
+    };
+  
+  
   private:
-    void clearDepth(const ocull::DepthBuffer *pDepthBuffer);
-    void resetStats();
+    Camera m_camera;
+    FW::CudaSurface *m_depthBuffer;
+    Result m_result;
+    
+  
+  public:
+    Query(unsigned int width, unsigned int height);
+    
+    
+    // +++ SETTERS +++
+    
+    void resize(unsigned int width, unsigned int height);
+    
+    inline void resize(const Vector2i &size) {resize(size.x, size.y);}
+    
+    inline void setCamera(const Camera &camera) {m_camera = camera;}
+        
+    /// Specify a default depth buffer, the size of the buffer must be the same
+    /// as the query's depth buffer size.
+    //void setDepthBuffer(..);
+    
+    
+    // +++ GETTERS +++
+    
+    inline const ocull::Camera& getCamera() { return m_camera; }
+    
+    /// Return the depthbuffer size
+    const ocull::Vector2i getSize();
+    
+    //getDepthBuffer();
+    
+    inline const Result& getResults() {return m_result;}
+    
+    
+  private:
+    void resetResults();
+    
+    
+  // forbidden methods
+  private:
+    DISALLOW_COPY_AND_ASSIGN(Query);
 };
 
-} // namespace ocull
+} //namespace ocull
 
 #endif //OCULL_QUERY_HPP_

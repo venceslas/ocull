@@ -1,38 +1,33 @@
 ///
-///
-///
+///   \file ocullQuery.cpp
+///   
 ///
 
 #include "ocullQuery.hpp"
 
-#include <cassert>
-#include <cstring>
 #include <iostream>
 #include "rasterizer/CudaSurface.hpp"
-#include "ocullScene.hpp"
+#include "rasterizer/cuda/Constants.hpp"  // for CR_TILE_SIZE
 
 
 
 namespace ocull {
 
 
-Query::~Query()
+// PUBLIC methods  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+Query::Query(unsigned int width, unsigned int height)
+    : m_depthBuffer(NULL)
 {
-  if (m_DepthBuffer)
-  {
-    delete m_DepthBuffer;
-    m_DepthBuffer = NULL;
-  }
+  resize( width, height);
+  resetResults();
 }
 
 
-///----------------------
-
-
-void Query::resize(unsigned int w, unsigned int h)
+void Query::resize(unsigned int width, unsigned int height)
 {
   // Check if the new resolution is valid
-  if (((w%CR_TILE_SIZE)!=0) || ((h%CR_TILE_SIZE)!=0))
+  if (((width%CR_TILE_SIZE)!=0) || ((height%CR_TILE_SIZE)!=0))
   {
     std::cerr << "[Error " << __FUNCTION__ << "] "
               << "The depth buffer resolution must be a multiple of "
@@ -42,175 +37,46 @@ void Query::resize(unsigned int w, unsigned int h)
   }
   
   // Recreate the buffer only if it has changed
-  if (m_DepthBuffer != NULL)
-  {
-    FW::Vec2i bufferSize = m_DepthBuffer->getSize();
-    
-    if ((bufferSize.x == w) && (bufferSize.y == h)) {
+  FW::Vec2i bufferSize( width, height);
+  
+  if (m_depthBuffer != NULL)
+  {    
+    if (bufferSize == m_depthBuffer->getSize()) {
       return;
     }
     
-    delete m_DepthBuffer;
+    delete m_depthBuffer;
   }
   
-  m_DepthBuffer = new FW::CudaSurface( FW::Vec2i(w, h), 
+  m_depthBuffer = new FW::CudaSurface( bufferSize, 
                                        FW::CudaSurface::FORMAT_DEPTH32 );
 }
 
+//setCamera()
 
-///----------------------
+//setDepthBuffer()
 
 
-void Query::begin(const ocull::Camera &camera, 
-                  const ocull::DepthBuffer *pDepthBuffer)
+const ocull::Vector2i Query::getSize()
 {
-  assert( !m_bHasBegun );  
-  
-  
-  // Set the camera used for the current query
-  m_pCamera = &camera;
-  
-  // Clears the previous query results
-  resetStats();
-  
-  // Clears the depth buffer or set a default one
-  //clearDepth( pDepthBuffer );
-  
-  // Set Depth buffer surface, default content (if any)
-  m_context.setRasterizerParams( m_DepthBuffer ); 
-  
-  //m_context.setRasterizerQueryParams();
-  
-  
-  m_bHasBegun = true;
-}
-
-void Query::end()
-{
-  assert( m_bHasBegun );
-  
-  m_pCamera = NULL;  
-  m_bHasBegun = false;
+  FW::Vec2i size = m_depthBuffer->getSize();
+  return Vector2i( size.x, size.y);
 }
 
 
-///----------------------
+// PRIVATE methods +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
-
-void Query::uploadScene(ocull::Scene &scene)
+void Query::resetResults()
 {
-  assert( m_bHasBegun );
-  
-  fprintf( stderr, "%s : not implemented yet\n", __FUNCTION__);
-  
-}
-
-
-void Query::uploadMesh(ocull::Mesh &mesh, 
-                       const ocull::Matrix4x4 &worldMatrix)
-{
-  assert( m_bHasBegun );
-  
-  
-  /// Update stats
-  m_stats.objectCount += 1u;
-  m_stats.trianglePassedCount += mesh.getTriangleCount();//
-  
-  // TODO: precompute the view proj
-  Matrix4x4 mvp = m_pCamera->frustum.projectionMatrix * 
-                  m_pCamera->viewMatrix *
-                  worldMatrix;
-  
-  /// Send to the rasterizer
-  m_context.uploadMesh( mesh, mvp);  
-}
-                        
-
-///----------------------
-
-
-
-void Query::getSamplesPassed(unsigned int *samplesPassed)
-{
-  assert( !m_bHasBegun );  
-  
-  if (m_stats.samplesPassed.empty()) {
-    *samplesPassed = 0u;
-    return;
+  if (!m_result.samplesPassed.empty()) {
+    m_result.samplesPassed.assign( m_result.samplesPassed.size(), 0u);
   }
   
-  unsigned int total = 0u;
-  for (size_t i=0u; i<m_stats.samplesPassed.size(); ++i) {
-    total += m_stats.samplesPassed[i];
-  }
-  
-  *samplesPassed = total;
-}
-
-void Query::getSamplesPassed(unsigned int *samplesPassed, size_t count)
-{
-  assert( !m_bHasBegun );
-   
-  if (m_stats.objectCount == 0u) {
-    return;
-  }
-  
-  if (samplesPassed == NULL) {
-    return;
-  }
-  
-  const size_t numElems = std::min( count, m_stats.samplesPassed.size());
-  memcpy( samplesPassed, &m_stats.samplesPassed[0], numElems * sizeof(unsigned int));
+  m_result.objectCount = 0u;
+  m_result.objectPassedCount = 0u;
+  m_result.triangleCount = 0u;
+  m_result.trianglePassedCount = 0u;
+  m_result.queryTime = 0.0f;
 }
     
-void Query::getDepthBuffer(ocull::DepthBuffer *depthBuffer)
-{  
-  assert( m_DepthBuffer != NULL );
-  
-  fprintf( stderr, "%s not implemented yet\n", __FUNCTION__ );
-  
-  /*
-  if (depthBuffer == NULL) {
-    return;
-  }
-  
-  // TODO
-  */
-}
-
-
-void Query::clearDepth(const ocull::DepthBuffer *pDepthBuffer)
-{
-  /*
-  assert( m_DepthBuffer != NULL );
-    
-  fprintf( stderr, "%s not implemented yet\n", __FUNCTION__ );
-  
-  // XXX should use a CUDA kernel for this
-   
-  if (pDepthBuffer == NULL)
-  {
-    // clear the depth buffer
-  }
-  else
-  {
-    // fill the depth buffer with values from pDepthBuffer    
-    // TODO assert the format are the sames
-  }
-*/
-}
-
-void Query::resetStats()
-{
-  if (!m_stats.samplesPassed.empty()) {
-    m_stats.samplesPassed.assign( m_stats.samplesPassed.size(), 0u);
-  }
-  
-  m_stats.objectCount = 0u;
-  m_stats.objectPassedCount = 0u;
-  m_stats.triangleCount = 0u;
-  m_stats.trianglePassedCount = 0u;
-  m_stats.queryTime = 0.0f;
-}
-
-} // namespace ocull
+} //namespace ocull

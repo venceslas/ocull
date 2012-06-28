@@ -1,86 +1,80 @@
 ///
-///
+///   \file ocullScene.hpp
 ///
 ///
 
 #ifndef OCULL_SCENE_HPP_
 #define OCULL_SCENE_HPP_
 
+#include <cstdlib>
 #include <vector>
 
 #include "rasterizer/framework/gpu/Buffer.hpp"
 #include "ocullDefs.hpp"
 
+#define OCULLSCENE_CACHE_FRIENDLY  0
+
 
 namespace ocull {
 
-// ~
 struct Mesh
 {
-  struct Vertex
-  {
-    FW::Buffer buffer;
-    size_t offset;
-    size_t size;
-    size_t stride;
-  } vertex;
+  public:
+    struct Vertex
+    {
+      FW::Buffer buffer;
+      size_t offset;
+      size_t count;
+      size_t stride;//
+    } vertex;
 
-  struct Index
-  {
-    FW::Buffer buffer;
-    size_t offset;
-    size_t size;
-  } index;
+    struct Index
+    {
+      FW::Buffer buffer;
+      size_t offset;
+      size_t count;
+    } index;
   
   
-  //
-  
-  Mesh( GLuint vbo, size_t vertOffset, size_t vertexCount, size_t stride,
-        GLuint ibo, size_t triOffset, size_t indexCount)
-  {
-    vertex.buffer.wrapGL(vbo);
-    vertex.offset = vertOffset;
-    vertex.size = vertexCount;
-    vertex.stride = stride;
+  public:
+    // GL mesh
+    Mesh( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
+          unsigned int ibo, size_t iOffset, size_t iCount)
+    {}
     
-    index.buffer.wrapGL(ibo);
-    index.offset = triOffset;
-    index.size = indexCount;//
-  }
-  
-  Mesh( float *vertices, size_t vertexCount,
-        unsigned int *indices, size_t indexCount)
-  {
-  }
-  
-  unsigned int getTriangleCount() const { return index.size / 3u; }
+    // CPU mesh
+    Mesh( float *vertices, size_t vCount,
+          float *indices,  size_t iCount);
+    
+    inline unsigned int getTriangleCount() const {return index.count / 3u;}
 };
 
 
-//typedef meshIdx_t unsigned int;
-
-//
-struct Scene 
+struct Scene
 {
-  /// [ Geometric datas ]
-  std::vector<ocull::Mesh> meshes;
+  public:
+    /// [ Geometric datas ]
+#   if !(OCULLSCENE_CACHE_FRIENDLY)
+    std::vector<ocull::Mesh> meshes;
+#   else
+    // (supposed) more cache efficient
+    std::vector<FW::Buffer> vertices;
+    std::vector<FW::Buffer> indices;
+    std::vector<FW::Vec3i>  vertexParams;
+    std::vector<FW::Vec2i>  indexParams;
+#   endif
 
-  // TODO change for a cache efficient structure :
-  //std::vector<FW::Buffer> vertices;
-  //std::vector<FW::Buffer> indices;
-  //std::vector<FW::Vec3ui> vertexParams;
-  //std::vector<FW::Vec2ui> indexParams;
+    /// [ per Instance attributes ]
+    std::vector<unsigned int> meshesId;
+    std::vector<ocull::Matrix4x4> worldMatrices;
   
-  /// [ per Instance attributes ]
-  std::vector<unsigned int> meshesId;
-  std::vector<ocull::Matrix4x4> worldMatrices;
   
-  //--
-  
-  unsigned int insertMesh( const ocull::Mesh &mesh );//
-  void insertModel( unsigned int meshId, Matrix4x4 worldMatrix);//      
-  void reset();//
-  
+  public:
+    unsigned int insertMesh(const Mesh& mesh);
+    
+    void insertModel( const unsigned int meshId, const Matrix4x4& modelMatrix);
+    
+    void reset();
 };
 
 } // namespace ocull

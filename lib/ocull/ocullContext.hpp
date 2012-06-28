@@ -1,71 +1,77 @@
 ///
-///   
-///     ~~ not great, rethink it ~~
+///   \file ocullContext.hpp
+///
+///   \note Using static for Creation / Destruction may not be a clever idea.
+///         I don't want the object to be statically initialized, because it
+///         could bypass some other lib initialization.. ok I can let this
+///         to the user, but it's a simple trick to 'solve' the problem.
 ///
 
 #ifndef OCULL_CONTEXT_HPP_
 #define OCULL_CONTEXT_HPP_
 
-#include "rasterizer/CudaRaster.hpp"
-#include "rasterizer/framework/base/Defs.hpp"
-#include "rasterizer/framework/gpu/CudaCompiler.hpp"
+#include <string>
 
+#include "rasterizer/framework/base/Defs.hpp"
+#include "rasterizer/CudaRaster.hpp"
 #include "ocullDefs.hpp"
+
 
 
 namespace ocull {
 
+class Query;
+struct Scene;
 struct Mesh;
-struct Query;
 
 class Context
 {  
-  friend class Query;
-  
   private:
-    FW::CudaCompiler m_cudaCompiler;
-    FW::CudaModule *m_CudaModule;
-    CUfunction m_vertexShaderKernel;
+    FW::CudaModule *m_cudaModule;
+    FW::CudaRaster  m_rasterizer;
     
-    FW::CudaRaster m_cudaRaster;
+    // Vertex Shader
+    CUfunction m_vsKernel;
+    FW::Buffer m_outVertices;     // VS output vertices (in clip-space)
     
-    // Vertex shaders output (transformed) vertices, in clip-space
-    FW::Buffer m_csVertices;
+    // Currently bound query
+    ocull::Query *m_pQuery;
     
-    // TODO
-    // A 'fake' color buffer, used to not have to remove the framebuffer from the
-    // rasterizer yet.
+    // [DEBUG only] (to remove later)
     FW::CudaSurface *m_colorBuffer;
-  
+    
+    
+  public:
+    static Context* Create(const std::string &pipeCubinFile);
+    static void Release(Context* context);
+    
   
   public:
-    Context()
-      : m_CudaModule(NULL),
-        m_colorBuffer(NULL)
-    {}
+    void begin(Query *pQuery);
+    void end();
     
-    ~Context();
-    
-    // (calls resize for each query ?)
-    //void resize(uint w, uint h);
-    
-    /// Load the preprocessed Pipeline, or compiles it if needed.
-    /// Must be call after the window's context & CUDA has been initialized.
-    void init();
+    // MUST be called between begin() / end()
+    void uploadScene(ocull::Scene *pScene);
+    void uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix);
   
-    //
-    GLuint DEBUG_getColorTex() {return (m_colorBuffer)?m_colorBuffer->getGLTexture():0u;}//
-    //
+    // [DEBUG only] (to remove later)
+    unsigned int getGLTexture();  
+  
   
   private:
-    /// set the depthBuffer surface used by the rasterizer and cleared it.
-    void setRasterizerParams(FW::CudaSurface *depthBuffer);
+    Context();
+    ~Context();
     
-    /// Transform the mesh data to clip space then send it through the 
-    /// rasterizer pipeline.
-    void uploadMesh(ocull::Mesh &mesh, const ocull::Matrix4x4 &worldMatrix);
+    // true between begin() / end(), false otherwise
+    inline bool isQueryBounded() { return m_pQuery != NULL; }
+  
+    
+  // forbidden methods
+  private:
+    DISALLOW_COPY_AND_ASSIGN(Context);
 };
 
 } //namespace ocull
+
 
 #endif //OCULL_CONTEXT_HPP_
