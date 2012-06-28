@@ -194,7 +194,7 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
 
 
 // [DEBUG only] (to remove later)
-unsigned int Context::getGLTexture()
+unsigned int Context::getColorTexture()
 {
   assert( m_colorBuffer != NULL );
   return m_colorBuffer->getGLTexture();

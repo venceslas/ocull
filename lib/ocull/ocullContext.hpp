@@ -55,7 +55,7 @@ class Context
     void uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix);
   
     // [DEBUG only] (to remove later)
-    unsigned int getGLTexture();  
+    unsigned int getColorTexture();  
   
   
   private:

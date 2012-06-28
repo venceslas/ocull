@@ -40,7 +40,7 @@ class Scene
     engine::Program m_program;
     
     ///    
-    ocull::Context m_ocullContext;
+    ocull::Context *m_ocullContext;
     ocull::Query *m_ocullQuery;
     ocull::Camera m_ocullCamera;
     ocull::Mesh *m_ocullMesh;

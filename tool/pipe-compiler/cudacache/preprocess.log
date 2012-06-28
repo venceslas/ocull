@@ -1,0 +1,1 @@
+nvcc -I"/usr/local/cuda/bin/../include" -I. -D_CRT_SECURE_NO_DEPRECATE -E -o "cudacache/preprocessed.cu" -include "cudacache/defines.inl" -I"../../lib/ocull/rasterizer/" -I"../../lib/ocull/rasterizer//framework"  "../../lib/ocull/rasterizer/shader/PassThrough.cu" 2>>"cudacache/preprocess.log"

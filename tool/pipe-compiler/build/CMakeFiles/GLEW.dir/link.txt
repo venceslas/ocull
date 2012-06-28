@@ -1,0 +1,2 @@
+/usr/bin/ar cr libGLEW.a  CMakeFiles/GLEW.dir/home/thibault/code/projet/ocull/sample/viewer/thirdparty/GL/glew.c.o
+/usr/bin/ranlib libGLEW.a

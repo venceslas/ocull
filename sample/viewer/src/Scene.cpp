@@ -170,10 +170,9 @@ void Scene::initQuery()
 {
   // trashy mode
   
-  m_ocullContext.init();
+  m_ocullContext = ocull::Context::Create( "../../sample/dummy/pipeShader.cubin" );
   
-  m_ocullQuery = new ocull::Query( m_ocullContext );
-  m_ocullQuery->resize( 1280, 720); // 
+  m_ocullQuery = new ocull::Query( 1280, 720);
   
   // TODO set camera frustum..
 
@@ -269,17 +268,19 @@ void Scene::run(Data &data)
   
   
   //query XXX
-  m_ocullCamera.frustum.projectionMatrix = data.view.camera[data.view.active].getProjectionMatrix();
-  m_ocullCamera.viewMatrix = data.view.camera[data.view.active].getViewMatrix();
+  const engine::Camera &camera = data.view.camera[data.view.active];
+  
+  //m_ocullCamera.frustum.projectionMatrix = camera.getProjectionMatrix();
+  m_ocullCamera.setViewMatrix( camera.getViewMatrix() );
   
   ocull::Matrix4x4 identity;
   
-  m_ocullQuery->begin( m_ocullCamera );
-    m_ocullQuery->uploadMesh( *m_ocullMesh, identity);
-  m_ocullQuery->end();
+  m_ocullContext->begin( m_ocullQuery );
+    m_ocullContext->uploadMesh( m_ocullMesh, identity);
+  m_ocullContext->end();
   
   
-  DEBUG_ScreenMapping( m_ocullContext.DEBUG_getColorTex() );
+  DEBUG_ScreenMapping( m_ocullContext->getColorTexture() );
   return;
   // XXX
   

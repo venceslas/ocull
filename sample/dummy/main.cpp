@@ -5,19 +5,35 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "ocull.hpp" // rewrite (tmp)
+#include <ocull/ocull.hpp> // rewrite (tmp)
 
 
 int main( int argc, char *argv[])
 {
-  /*
-  ocull::Context context;
+  ocull::Context *context = ocull::Context::Create( "pipeShader.cubin" );
   
-  // Not really clean to call init() for the context object (just after creating it)
-  context.init(); 
+  ocull::Query query( 1280, 720);
   
-  ocull::Query *query = new ocull::Query( context );
-  */
+  
+  ocull::Camera camera;
+  
+  camera.setFrustum( ocull::Frustum() );
+  camera.setViewMatrix( ocull::Matrix4x4() );
+  
+  query.setCamera( camera );
+  
+  //query.setDepthBuffer();
+  
+  context->begin( &query );
+    //context->uploadMesh();
+  context->end();
+  
+  ocull::Query::Result result = query.getResults();
+  
+  
+  
+  ocull::Context::Release( context );
+  
   
   return EXIT_SUCCESS;
 }

@@ -1,0 +1,1 @@
+nvcc -I"/usr/local/cuda/bin/../include" -I. -D_CRT_SECURE_NO_DEPRECATE -o "cudacache/6baabfeab0d57b854fe9c613.cubin" -include "cudacache/defines.inl"  -include cuda.h -I"../../lib/ocull/rasterizer/" -I"../../lib/ocull/rasterizer//framework" -cubin -arch sm_20 -m64  "../../lib/ocull/rasterizer/shader/PassThrough.cu" 2>>"cudacache/compile.log"
