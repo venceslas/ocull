@@ -75,7 +75,6 @@ void Context::begin(Query *pQuery)
   assert( isQueryBounded() == false );
   assert( pQuery != NULL );
   
-  
   /// Set rasterizer parameters
   
   //---  
@@ -83,15 +82,13 @@ void Context::begin(Query *pQuery)
   
   FW::Vec2i depthSize = pQuery->m_depthBuffer->getSize();
   
-  if (m_colorBuffer != NULL) 
-  {
-    if (depthSize != m_colorBuffer->getSize()) {
-      delete m_colorBuffer;
-    }
-  }  
-  m_colorBuffer = new FW::CudaSurface( depthSize, 
-                                       FW::CudaSurface::FORMAT_RGBA8, 
-                                       1u);
+  if ((m_colorBuffer != NULL) && (depthSize != m_colorBuffer->getSize())) {
+    delete m_colorBuffer;
+  }
+  
+  if (m_colorBuffer == NULL) {
+    m_colorBuffer = new FW::CudaSurface( depthSize, FW::CudaSurface::FORMAT_RGBA8, 1u);
+  }
   
   // TODO : fill the depth buffer with the query default depthbuffer (if any)
   
@@ -170,26 +167,28 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
 # undef COPY_MAT
   
   
-  std::cerr << __FUNCTION__ << " : unfinished." << std::endl;
   
+  /**/
   
-  // Not sure at all for this, I think I have to sent the vbo's with getGLPtr() or something
-  /**
+  //std::cerr << __FUNCTION__ << " : unfinished." << std::endl;
+  
+  // Not sure at all for this, I think I have to send the vbo's with getGLPtr() or something
   int ofs = 0;
-  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, mesh.vertex.buffer.getCudaPtr());
-  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, m_csVertices.getMutableCudaPtrDiscard());
-  ofs += m_cudaModule->setParami( m_vsKernel, ofs, mesh.vertex.size);
-  // TODO set vertex stride & offset
+  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, pMesh->vertex.buffer.getCudaPtr());
+  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, m_outVertices.getMutableCudaPtrDiscard());
+  ofs += m_cudaModule->setParami  ( m_vsKernel, ofs, pMesh->vertex.count);
+  // XXX TODO set vertex stride & offset XXX
   
   FW::Vec2i blockSize(32, 4);
-  int numBlocks = (mesh.vertex.size - 1) / (blockSize.x * blockSize.y) + 1;
+  int numBlocks = (pMesh->vertex.count - 1u) / (blockSize.x * blockSize.y) + 1;
   m_cudaModule->launchKernel( m_vsKernel, blockSize, numBlocks);
   
   /// Sent transformed vertices to the pipeline
-  m_rasterizer.setVertexBuffer( &m_csVertices, 0);
-  m_rasterizer.setIndexBuffer( &mesh.index.buffer, mesh.index.offset, mesh.getTriangleCount());
+  m_rasterizer.setVertexBuffer( &m_outVertices, 0);
+  m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());
   m_rasterizer.drawTriangles();
-  */
+  
+  /**/
 }
 
 

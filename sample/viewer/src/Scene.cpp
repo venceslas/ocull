@@ -49,7 +49,7 @@ void DEBUG_ScreenMapping(const GLuint texId)
     glBindTexture( GL_TEXTURE_2D, texId);
 
     glBindVertexArray( vao );
-    glDrawArrays( GL_TRIANGLES, 0, 3);
+      glDrawArrays( GL_TRIANGLES, 0, 3);
     glBindVertexArray( 0u );
 
     glBindTexture( GL_TEXTURE_2D, 0u);
@@ -170,7 +170,7 @@ void Scene::initQuery()
 {
   // trashy mode
   
-  m_ocullContext = ocull::Context::Create( "../../sample/dummy/pipeShader.cubin" );
+  m_ocullContext = ocull::Context::Create( "data/shader/pipeShader.cubin" );
   
   m_ocullQuery = new ocull::Query( 1280, 720);
   
@@ -242,7 +242,7 @@ void Scene::updateGeometry()
       
       /// setup Ocull Scene
       m_ocullMesh = new ocull::Mesh( p->getVBO(), 0u, p->getNumVertices(), 0u,
-                                 p->getIBO(), 0u, p->getNumIndices());
+                                     p->getIBO(), 0u, p->getNumIndices());
       
       ///----
 
@@ -267,11 +267,15 @@ void Scene::run(Data &data)
   updateGeometry();
   
   
+  ///-----------
+  
+  
   //query XXX
   const engine::Camera &camera = data.view.camera[data.view.active];
-  
-  //m_ocullCamera.frustum.projectionMatrix = camera.getProjectionMatrix();
+    
+  m_ocullCamera.setFrustum( ocull::Frustum(60.0f, 16.0f/9.0f, 0.5, 2500.0f) );
   m_ocullCamera.setViewMatrix( camera.getViewMatrix() );
+  m_ocullQuery->setCamera( m_ocullCamera );
   
   ocull::Matrix4x4 identity;
   
@@ -280,15 +284,19 @@ void Scene::run(Data &data)
   m_ocullContext->end();
   
   
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
   DEBUG_ScreenMapping( m_ocullContext->getColorTexture() );
+  
   return;
   // XXX
   
+  
   ///-----------
+  
 
   // RENDERING
-  
-  glClearColor( 0.2f, 0.4f, 0.8f, 1.0f);
+    
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   glEnable(GL_DEPTH_TEST);

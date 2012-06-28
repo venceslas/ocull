@@ -53,9 +53,9 @@ class Context
     // MUST be called between begin() / end()
     void uploadScene(ocull::Scene *pScene);
     void uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix);
-  
+    
     // [DEBUG only] (to remove later)
-    unsigned int getColorTexture();  
+    unsigned int getColorTexture();
   
   
   private:
