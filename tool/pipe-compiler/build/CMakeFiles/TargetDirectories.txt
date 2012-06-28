@@ -1,2 +1,0 @@
-/home/thibault/code/projet/ocull/tool/pipe-compiler/build/CMakeFiles/GLEW.dir
-/home/thibault/code/projet/ocull/tool/pipe-compiler/build/CMakeFiles/cubinPipeCompiler.dir
