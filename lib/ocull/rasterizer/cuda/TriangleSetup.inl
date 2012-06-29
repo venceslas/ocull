@@ -1,24 +1,35 @@
 /*
- *  Copyright 2010-2011 NVIDIA Corporation
+ *  Copyright (c) 2009-2011, NVIDIA Corporation
+ *  All rights reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of NVIDIA Corporation nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 //------------------------------------------------------------------------
 
-__device__ __inline__
-void snapTriangle( float4 v0, float4 v1, float4 v2,
-                   int2& p0, int2& p1, int2& p2, float3& rcpW, int2& lo, int2& hi)
+__device__ __inline__ void snapTriangle(
+    float4 v0, float4 v1, float4 v2,
+    int2& p0, int2& p1, int2& p2, float3& rcpW, int2& lo, int2& hi)
 {
     F32 viewScaleX = (F32)(c_crParams.viewportWidth  << (CR_SUBPIXEL_LOG2 - 1));
     F32 viewScaleY = (F32)(c_crParams.viewportHeight << (CR_SUBPIXEL_LOG2 - 1));
@@ -36,9 +47,9 @@ void snapTriangle( float4 v0, float4 v1, float4 v2,
 // 2 = Between pixels.
 
 template <int SamplesLog2>
-__device__ __inline__ 
-int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
-                     int2& d1, int2& d2, S32& area)
+__device__ __inline__ int prepareTriangle(
+    int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
+    int2& d1, int2& d2, S32& area)
 {
     // Backfacing or degenerate => cull.
 
@@ -46,9 +57,8 @@ int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
     d2 = make_int2(p2.x - p0.x, p2.y - p0.y);
     area = d1.x * d2.y - d1.y * d2.x;
 
-    if (area <= 0) {
-      return 1; // Backfacing.
-    }
+    if (area <= 0)
+        return 1; // Backfacing.
 
     // AABB falls between samples => cull.
 
@@ -60,11 +70,11 @@ int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
     int hix = (hi.x + biasX) & -sampleSize;
     int hiy = (hi.y + biasY) & -sampleSize;
 
-    if (lox > hix || loy > hiy) {
-      return 2; // Between pixels.
-    }
-    
+    if (lox > hix || loy > hiy)
+        return 2; // Between pixels.
+
     // AABB covers 1 or 2 samples => cull if they are not covered.
+
     int diff = add_sub(hix, hiy, lox) - loy;
     if (diff <= sampleSize)
     {
@@ -77,10 +87,9 @@ int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
 
         if (e0 < 0 || e1 < 0 || e2 < 0)
         {
-            if (diff == 0) {
-              return 2; // Between pixels.
-            }
-            
+            if (diff == 0)
+                return 2; // Between pixels.
+
             t0 = make_int2(add_sub(p0.x, biasX, hix), add_sub(p0.y, biasY, hiy));
             t1 = make_int2(add_sub(p1.x, biasX, hix), add_sub(p1.y, biasY, hiy));
             t2 = make_int2(add_sub(p2.x, biasX, hix), add_sub(p2.y, biasY, hiy));
@@ -88,9 +97,8 @@ int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
             e1 = t1.x * t2.y - t1.y * t2.x;
             e2 = t2.x * t0.y - t2.y * t0.x;
 
-            if (e0 < 0 || e1 < 0 || e2 < 0) {
-              return 2; // Between pixels.
-            }
+            if (e0 < 0 || e1 < 0 || e2 < 0)
+                return 2; // Between pixels.
         }
     }
 
@@ -102,15 +110,13 @@ int prepareTriangle( int2 p0, int2 p1, int2 p2, int2 lo, int2 hi,
 //------------------------------------------------------------------------
 
 template <int SamplesLog2, U32 RenderModeFlags>
-__device__ __inline__ 
-void setupTriangle( CRTriangleHeader* th, 
-                    CRTriangleData* td, 
-                    int3 vidx,
-                    float4 v0, float4 v1, float4 v2,
-                    float2 b0, float2 b1, float2 b2,
-                    int2 p0, int2 p1, int2 p2, float3 rcpW,
-                    int2 d1, int2 d2, S32 area,
-                    U32& timerTotal)
+__device__ __inline__ void setupTriangle(
+    CRTriangleHeader* th, CRTriangleData* td, int3 vidx,
+    float4 v0, float4 v1, float4 v2,
+    float2 b0, float2 b1, float2 b2,
+    int2 p0, int2 p1, int2 p2, float3 rcpW,
+    int2 d1, int2 d2, S32 area,
+    U32& timerTotal)
 {
     CR_TIMER_IN(SetupPleq);
     U32 dep = 0;
@@ -178,14 +184,11 @@ void setupTriangle( CRTriangleHeader* th,
 
     CR_TIMER_IN(SetupTriDataWrite);
 
-    if ((RenderModeFlags & RenderModeFlag_EnableDepth) != 0) {
+    if ((RenderModeFlags & RenderModeFlag_EnableDepth) != 0)
         *(uint4*)&td->zx = make_uint4(zpleq.x, zpleq.y, zpleq.z, zslope);
-    }
-    
+
     if ((RenderModeFlags & RenderModeFlag_EnableLerp) == 0)
-    {
         *(uint4*)&td->vb = make_uint4(0, vidx.x, vidx.y, vidx.z);
-    }
     else
     {
         *(uint4*)&td->wx = make_uint4(wpleq.x, wpleq.y, wpleq.z, upleq.x);
@@ -209,7 +212,7 @@ void setupTriangle( CRTriangleHeader* th,
         prmt(p0.x, p0.y, 0x5410),
         prmt(p1.x, p1.y, 0x5410),
         prmt(p2.x, p2.y, 0x5410),
-    		(zmin & 0xfffff000u) | (f01 << 6) | (f12 << 2) | (f20 >> 2));
+        (zmin & 0xfffff000u) | (f01 << 6) | (f12 << 2) | (f20 >> 2));
 
     CR_TIMER_OUT(SetupTriHeaderWrite);
 }

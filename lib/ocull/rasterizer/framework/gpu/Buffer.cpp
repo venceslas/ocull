@@ -166,8 +166,10 @@ void Buffer::setRange(S64 dstOfs, Buffer& src, S64 srcOfs, S64 size, bool async,
   if (!size)
     return;
 
-  if ((src.m_exists & Cuda) != 0 && (src.m_dirty & Cuda) == 0 && 
-      (m_owner == Cuda || m_owner == Module_None)) {
+  if ((src.m_exists & Cuda) != 0 && 
+      (src.m_dirty & Cuda) == 0 && 
+      (m_owner == Cuda || m_owner == Module_None))
+  {
     memcpyDtoD(getMutableCudaPtr(dstOfs), src.getCudaPtr(srcOfs), (U32)size);
   } else if ((src.m_exists & CPU) != 0 && (src.m_dirty & CPU) == 0) {
     setRange(dstOfs, src.getPtr(srcOfs), size, async, cudaStream);

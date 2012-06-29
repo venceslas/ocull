@@ -25,6 +25,7 @@ struct Data
     { 
       CAMERA_MAIN = 0, 
       CAMERA_DEBUG, 
+      
       kCount 
     } active;
     
@@ -52,6 +53,7 @@ struct Data
     { 
       DISPLAY_SIMPLE = 0, 
       DISPLAY_SPLITTED, 
+      
       kCount 
     } displayMode;
     

@@ -10,57 +10,6 @@
 #include "engine/VertexBuffer.hpp"
 
 
-// XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~
-namespace {
-
-void DEBUG_ScreenMapping(const GLuint texId)
-{
-  static bool bInit = false;
-  
-  GLuint vao;
-  engine::Program ps;
-  
-  if (!bInit)
-  {
-    glGenVertexArrays( 1, &vao); 
-    
-    glswInit();
-    glswSetPath( "data/shader/", ".glsl");
-    glswAddDirectiveToken("*", "#version 330 core");  
-    
-    ps.generate();
-      ps.addShader( engine::VERTEX_SHADER,   "ScreenMapping.Vertex");
-      ps.addShader( engine::FRAGMENT_SHADER, "ScreenMapping.Fragment");
-    ps.link();
-    
-    glswShutdown();
-    
-    bInit = true;
-  }
-  
-  glClear(GL_COLOR_BUFFER_BIT);
-  glDisable( GL_DEPTH_TEST );
-  glDepthMask( GL_FALSE );
-  
-  ps.bind();
-  {
-    ps.setUniform( "uTexture", 0);
-    glActiveTexture( GL_TEXTURE0 );
-    glBindTexture( GL_TEXTURE_2D, texId);
-
-    glBindVertexArray( vao );
-      glDrawArrays( GL_TRIANGLES, 0, 3);
-    glBindVertexArray( 0u );
-
-    glBindTexture( GL_TEXTURE_2D, 0u);
-  }
-  ps.unbind();
-}
-
-}
-// XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~ XX ~
-
-
 namespace app {
 
 namespace cubewire {
@@ -73,7 +22,9 @@ void setup(engine::VertexBuffer &vb);
 
 Scene::Scene() 
     : m_bFileLoaded(false),
-      m_bSceneResolved(false)
+      m_bSceneResolved(false),
+      m_screenmappingVAO(0u),
+      m_ocullQuery(NULL)
 {
 }
 
@@ -82,8 +33,13 @@ Scene::~Scene()
   if (m_bFileLoaded) {
     drn_close( &m_cache );
   }
+  
   if (m_bSceneResolved) {    
     drn_scene::releaseScene(&m_drnScene);
+  }
+  
+  if (m_screenmappingVAO) {
+    glDeleteVertexArrays( 1, &m_screenmappingVAO);
   }
 }
 
@@ -146,33 +102,41 @@ void Scene::initGeometry(const char *filename)
   //---------------
   
   cubewire::setup( m_cubeWire );
+  
+  //--------------
+  
+  glGenVertexArrays( 1, &m_screenmappingVAO); 
 }
 
 void Scene::initShader()
 {
   const char *kShadersPath = "data/shader/";
   
+
   /// GLSW, shader file manager
   glswInit();
   
   glswSetPath( kShadersPath, ".glsl");
   glswAddDirectiveToken("*", "#version 330 core");  
   
-  m_program.generate();
-    m_program.addShader( engine::VERTEX_SHADER,   "PassThrough.Vertex");
-    m_program.addShader( engine::FRAGMENT_SHADER, "PassThrough.Fragment");
-  m_program.link();
+  m_passthroughPS.generate();
+    m_passthroughPS.addShader( engine::VERTEX_SHADER,   "PassThrough.Vertex");
+    m_passthroughPS.addShader( engine::FRAGMENT_SHADER, "PassThrough.Fragment");
+  m_passthroughPS.link();
+  
+  m_screenmappingPS.generate();
+    m_screenmappingPS.addShader( engine::VERTEX_SHADER,   "ScreenMapping.Vertex");
+    m_screenmappingPS.addShader( engine::FRAGMENT_SHADER, "ScreenMapping.Fragment");
+  m_screenmappingPS.link();
   
   glswShutdown();
+  
 }
 
 void Scene::initQuery()
 {
-  // trashy mode
-  
   m_ocullContext = ocull::Context::Create( "data/shader/pipeShader.cubin" );
   
-  m_ocullQuery = new ocull::Query( 1280, 720);
   
   // TODO set camera frustum..
 
@@ -235,17 +199,24 @@ void Scene::updateGeometry()
             
       p->generate();//
       p->complete( GL_STATIC_DRAW ); //
-      p->cleanData();
 
 
       ///----
-      
       /// setup Ocull Scene
-      m_ocullMesh = new ocull::Mesh( p->getVBO(), 0u, p->getNumVertices(), 0u,
-                                     p->getIBO(), 0u, p->getNumIndices());
-      
+#     if 0
+      // OpenGL
+      m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
+                       p->getIBO(), 0u, p->getNumIndices());
+#     else
+      // Cuda array
+      m_ocullMesh.set( vertices, positions.size(),
+                       &indices[0], indices.size());
+#     endif
       ///----
 
+      
+      p->cleanData();
+      
       
       m_meshInit[i] = true;
     }
@@ -266,37 +237,46 @@ void Scene::run(Data &data)
   
   updateGeometry();
   
-  
+
+
+  sf::Vector2u windowSize = data.context.handle.getSize();
+
+# if 1
+
   ///-----------
+  
+  if (m_ocullQuery == NULL) {
+    m_ocullQuery = new ocull::Query( windowSize.x, windowSize.y);//
+  }
   
   
   //query XXX
   const engine::Camera &camera = data.view.camera[data.view.active];
     
-  m_ocullCamera.setFrustum( ocull::Frustum(60.0f, 16.0f/9.0f, 0.5, 2500.0f) );
+  float ratio = windowSize.x / float(windowSize.y);
+  m_ocullCamera.setFrustum( ocull::Frustum(60.0f, ratio, 0.5, 2500.0f) );
+  
   m_ocullCamera.setViewMatrix( camera.getViewMatrix() );
   m_ocullQuery->setCamera( m_ocullCamera );
   
   ocull::Matrix4x4 identity;
   
   m_ocullContext->begin( m_ocullQuery );
-    m_ocullContext->uploadMesh( m_ocullMesh, identity);
+    m_ocullContext->uploadMesh( &m_ocullMesh, identity);
   m_ocullContext->end();
   
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  DEBUG_ScreenMapping( m_ocullContext->getColorTexture() );
-  
-  return;
-  // XXX
-  
-  
+  screenMapping( m_ocullContext->getColorTexture() );
+    
+  /**/
   ///-----------
   
+# else
 
   // RENDERING
-    
+  glClearColor( 0.2f, 0.2f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   glEnable(GL_DEPTH_TEST);
@@ -305,7 +285,6 @@ void Scene::run(Data &data)
   glDisable( GL_CULL_FACE );
   
 
-  sf::Vector2u windowSize = data.context.handle.getSize();
   engine::Camera &mainCamera = data.view.camera[Data::View::CAMERA_MAIN];
   engine::Camera &debugCamera = data.view.camera[Data::View::CAMERA_DEBUG];
 
@@ -339,12 +318,14 @@ void Scene::run(Data &data)
     }
     
   }
+
+# endif
   
 }
 
 void Scene::render(const engine::Camera& camera)
 {
-  m_program.bind();  
+  m_passthroughPS.bind();  
 
   const glm::mat4 &viewProj = camera.getViewProjMatrix();
   
@@ -366,12 +347,12 @@ void Scene::render(const engine::Camera& camera)
     memcpy( &(worldMatrix[0][0]), m_drnScene.dagNodeStates[did].otwTransform, 
             sizeof(worldMatrix) );
     
-    m_program.setUniform( "uModelViewProjMatrix", viewProj * worldMatrix);
+    m_passthroughPS.setUniform( "uModelViewProjMatrix", viewProj * worldMatrix);
     
-    m_program.setUniform( "uColor", glm::vec3(mat->diffuseColor[0], 
-                                              mat->diffuseColor[1], 
-                                              mat->diffuseColor[2]));
-    m_program.setUniform( "uEnableLight", true);
+    m_passthroughPS.setUniform( "uColor", glm::vec3(mat->diffuseColor[0], 
+                                                    mat->diffuseColor[1], 
+                                                    mat->diffuseColor[2]));
+    m_passthroughPS.setUniform( "uEnableLight", true);
     
     // bug with large scene: too much VAOs created ?
     p->draw();
@@ -379,8 +360,9 @@ void Scene::render(const engine::Camera& camera)
     //printf("%d\n", glGetError());
   }
 
-  m_program.unbind();
+  m_passthroughPS.unbind();
 }
+
 
 void Scene::renderMainFrustum(const engine::Camera &mainCamera,
                               const engine::Camera &debugCamera)
@@ -388,16 +370,43 @@ void Scene::renderMainFrustum(const engine::Camera &mainCamera,
   const glm::mat4 model = glm::inverse( mainCamera.getViewProjMatrix() );  
   const glm::mat4 viewProj = debugCamera.getViewProjMatrix();
   
-  m_program.bind();  
+  m_passthroughPS.bind();  
   
-    m_program.setUniform( "uModelViewProjMatrix", viewProj * model);    
-    m_program.setUniform( "uColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    m_program.setUniform( "uEnableLight", false);
+    m_passthroughPS.setUniform( "uModelViewProjMatrix", viewProj * model);    
+    m_passthroughPS.setUniform( "uColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    m_passthroughPS.setUniform( "uEnableLight", false);
     
     m_cubeWire.draw(GL_LINES);
                                               
-  m_program.unbind();
+  m_passthroughPS.unbind();
 }
+
+void Scene::screenMapping(const unsigned int textureId)
+{
+  glClear( GL_COLOR_BUFFER_BIT );
+  
+  glDisable( GL_DEPTH_TEST );
+  glDepthMask( GL_FALSE );
+  
+  m_screenmappingPS.bind();
+  {
+    m_screenmappingPS.setUniform( "uTexture", 0);
+    glActiveTexture( GL_TEXTURE0 );
+    glBindTexture( GL_TEXTURE_2D, textureId);
+
+    glBindVertexArray( m_screenmappingVAO );
+      glDrawArrays( GL_TRIANGLES, 0, 3);
+    glBindVertexArray( 0u );
+
+    glBindTexture( GL_TEXTURE_2D, 0u);
+  }
+  m_screenmappingPS.unbind();
+  
+  glDepthMask( GL_TRUE );
+  glEnable( GL_DEPTH_TEST );
+}
+
+
 
 namespace cubewire {
 

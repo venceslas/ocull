@@ -1,17 +1,28 @@
 /*
- *  Copyright 2010-2011 NVIDIA Corporation
+ *  Copyright (c) 2009-2011, NVIDIA Corporation
+ *  All rights reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of NVIDIA Corporation nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "Util.hpp"
@@ -252,20 +263,20 @@ __device__ __inline__ U64 cover8x8_lookupMask(S64 yinit, U32 yinc, U32 flips, vo
     // First half.
 
     U32 yfrac = getLo(yinit);
-    int shape = add_clamp_0_x(getHi(yinit) + 4, 0, 11);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
+    U32 shape = add_clamp_0_x(getHi(yinit) + 4, 0, 11);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
     int oct = flips & ((1 << CR_FLIPBIT_FLIP_X) | (1 << CR_FLIPBIT_SWAP_XY));
     U64 mask = *(U64*)((U8*)lut + oct + (shape << 5));
 
     // Second half.
 
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
     shape = add_clamp_0_x(getHi(yinit) + 4, __popc(shape & 15), 11);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
-    yfrac = add_cc(yfrac, yinc), shape = addc(shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
+    add_add_carry(yfrac, yfrac, yinc, shape, shape, shape);
     mask |= *(U64*)((U8*)lut + oct + (shape << 5) + (12 << 8));
     return (flips >= (1 << CR_FLIPBIT_COMPL)) ? ~mask : mask;
 }
@@ -299,19 +310,13 @@ __device__ __inline__ U64 cover8x8_generateMask_noLUT(S32 curr, S32 dx, S32 dy)
     S32 stepY = stepYorig << (CR_SUBPIXEL_LOG2 + 1);
 
     U32 hi = isetge(curr, 0);
-    curr += curr;
+    U32 frac = curr + curr;
     for (int i = 62; i >= 32; i--)
-	{
-		curr = add_cc(curr, ((i & 7) == 7) ? stepY : stepX);
-		hi = addc(hi, hi);
-	}
+        add_add_carry(frac, frac, ((i & 7) == 7) ? stepY : stepX, hi, hi, hi);
 
 	U32 lo = 0;
     for (int i = 31; i >= 0; i--)
-	{
-		curr = add_cc(curr, ((i & 7) == 7) ? stepY : stepX);
-		lo = addc(lo, lo);
-	}
+        add_add_carry(frac, frac, ((i & 7) == 7) ? stepY : stepX, lo, lo, lo);
 
 	lo ^= lo >> 1,  hi ^= hi >> 1;
 	lo ^= lo >> 2,  hi ^= hi >> 2;

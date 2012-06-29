@@ -1,17 +1,28 @@
 /*
- *  Copyright 2010-2011 NVIDIA Corporation
+ *  Copyright (c) 2009-2011, NVIDIA Corporation
+ *  All rights reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of NVIDIA Corporation nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #pragma once
@@ -82,9 +93,7 @@ __device__ __inline__ U32   getLaneMaskGe           (void)                  { U3
 __device__ __inline__ int   findLeadingOne          (U32 v)                 { U32 r; asm("bfind.u32 %0, %1;" : "=r"(r) : "r"(v)); return r; }
 __device__ __inline__ bool  singleLane              (void)                  { return ((__ballot(true) & getLaneMaskLt()) == 0); }
 
-__device__ __inline__ U32   add_cc                  (U32 a, U32 b)          { U32 v; asm("add.cc.u32 %0, %1, %2;" : "=r"(v) : "r"(a), "r"(b)); return v; }
-__device__ __inline__ U32   addc                    (U32 a, U32 b)          { U32 v; asm("addc.u32 %0, %1, %2;" : "=r"(v) : "r"(a), "r"(b)); return v; }
-__device__ __inline__ U32   addc_cc                 (U32 a, U32 b)          { U32 v; asm("addc.cc.u32 %0, %1, %2;" : "=r"(v) : "r"(a), "r"(b)); return v; }
+__device__ __inline__ void  add_add_carry           (U32& rlo, U32 alo, U32 blo, U32& rhi, U32 ahi, U32 bhi) { U64 r = combineLoHi(alo, ahi) + combineLoHi(blo, bhi); rlo = getLo(r); rhi = getHi(r); }
 __device__ __inline__ S32   f32_to_s32_sat          (F32 a)                 { S32 v; asm("cvt.rni.sat.s32.f32 %0, %1;" : "=r"(v) : "f"(a)); return v; }
 __device__ __inline__ U32   f32_to_u32_sat          (F32 a)                 { U32 v; asm("cvt.rni.sat.u32.f32 %0, %1;" : "=r"(v) : "f"(a)); return v; }
 __device__ __inline__ U32   f32_to_u32_sat_rmi      (F32 a)                 { U32 v; asm("cvt.rmi.sat.u32.f32 %0, %1;" : "=r"(v) : "f"(a)); return v; }
@@ -168,7 +177,7 @@ __device__ __inline__ U64   cover8x8_lookupMask         (S64 yinit, U32 yinc, U3
 
 __device__ __inline__ U64   cover8x8_exact_noLUT        (S32 ox, S32 oy, S32 dx, S32 dy); // optimized reference implementation, does not require look-up table
 __device__ __inline__ U64   cover8x8_conservative_noLUT (S32 ox, S32 oy, S32 dx, S32 dy);
-__device__ __inline__ U64 cover8x8_generateMask_noLUT   (S32 curr, S32 dx, S32 dy);
+__device__ __inline__ U64   cover8x8_generateMask_noLUT (S32 curr, S32 dx, S32 dy);
 
 __device__ __inline__ U32   coverMSAA_ref               (int samplesLog2, S32 ox, S32 oy, S32 dx, S32 dy);
 __device__ __inline__ U32   coverMSAA_fast              (int samplesLog2, S32 ox, S32 oy, S32 dx, S32 dy);

@@ -76,16 +76,17 @@ void Viewer::_initData( int argc, char *argv[])
     
   
   // Main Camera
+  glm::vec3 eyePos(0.0f, 2.0f, 5.0f);
+  glm::vec3 eyeDir(0.0f, 0.0f, -1.0f);
+  
   engine::Camera *pCamera = &m_data.view.camera[Data::View::CAMERA_MAIN];
-  pCamera->setViewParams( glm::vec3( 0.0f, 5.0f, 5.0f), 
-                          glm::vec3( 0.0f, 5.0f, 0.0f) );
+  pCamera->setViewParams( eyePos, eyePos+eyeDir );
   pCamera->setProjectionParams( fov, aspectRatio, zNear, zFar);
   
   
   // Debug Camera
   pCamera = &m_data.view.camera[Data::View::CAMERA_DEBUG];
-  pCamera->setViewParams( glm::vec3( 0.0f, 5.0f, 5.0f), 
-                          glm::vec3( 0.0f, 5.0f, 0.0f) );
+  pCamera->setViewParams( eyePos, eyePos+eyeDir );
   pCamera->setProjectionParams( fov, aspectRatio, zNear, zFar);
 }
 

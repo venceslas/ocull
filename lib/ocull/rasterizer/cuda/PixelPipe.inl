@@ -1,17 +1,28 @@
 /*
- *  Copyright 2010-2011 NVIDIA Corporation
+ *  Copyright (c) 2009-2011, NVIDIA Corporation
+ *  All rights reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of NVIDIA Corporation nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "PixelPipe.hpp"
@@ -40,8 +51,7 @@ extern "C" surface<void, 2>     s_depthBuffer;
 // FragmentShaderBase.
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-Vec4f FragmentShaderBase::getVaryingAtVertex(int varyingIdx, int vertIdx) const
+__device__ __inline__ Vec4f FragmentShaderBase::getVaryingAtVertex(int varyingIdx, int vertIdx) const
 {
     float4 t = tex1Dfetch(t_vertexBuffer, vertIdx * (m_vertexBytes / sizeof(Vec4f)) + varyingIdx + 1);
     return Vec4f(t.x, t.y, t.z, t.w);
@@ -49,8 +59,7 @@ Vec4f FragmentShaderBase::getVaryingAtVertex(int varyingIdx, int vertIdx) const
 
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-Vec4f FragmentShaderBase::interpolateVarying(int varyingIdx, const Vec3f& bary) const
+__device__ __inline__ Vec4f FragmentShaderBase::interpolateVarying(int varyingIdx, const Vec3f& bary) const
 {
     Vec4f v0 = getVaryingAtVertex(varyingIdx, m_vertIdx.x);
     Vec4f v1 = getVaryingAtVertex(varyingIdx, m_vertIdx.y);
@@ -62,24 +71,21 @@ Vec4f FragmentShaderBase::interpolateVarying(int varyingIdx, const Vec3f& bary) 
 // Common shaders.
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-void GouraudShader::run(void)
+__device__ __inline__ void GouraudShader::run(void)
 {
     m_color = toABGR(interpolateVarying(0, m_centroid));
 }
 
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-void BlendSrcOver::run(void)
+__device__ __inline__ void BlendSrcOver::run(void)
 {
     m_color = blendABGR(m_src, m_dst, m_src, ~m_src, m_src, ~m_src);
 }
 
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-void BlendAdditive::run(void)
+__device__ __inline__ void BlendAdditive::run(void)
 {
     m_color = blendABGRClamp(m_src, m_dst, ~0, ~0, ~0, ~0);
 }
@@ -120,8 +126,7 @@ void BlendAdditive::run(void)
 
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-void incProfilingCounter(int counterIdx, S64 num, S64 denom)
+__device__ __inline__ void incProfilingCounter(int counterIdx, S64 num, S64 denom)
 {
     int numCounters = sizeof(CRProfCounterOrder) - 1;
     int warpIdx = threadIdx.y + blockDim.y * (blockIdx.x + gridDim.x * blockIdx.y);
@@ -135,8 +140,7 @@ void incProfilingCounter(int counterIdx, S64 num, S64 denom)
 
 //------------------------------------------------------------------------
 
-__device__ __inline__
-void incProfilingCounterLargeGrid(int counterIdx, S64 num, S64 denom)
+__device__ __inline__ void incProfilingCounterLargeGrid(int counterIdx, S64 num, S64 denom)
 {
     __shared__ volatile U64 s_warpTotal[48];
     bool isLeader = singleLane();
@@ -163,46 +167,22 @@ __device__ __inline__ U32 queryProfilingTimer(int timerIdx, U32 dep)
     return ((dep & c_zero) == 0 && c_profLaunchIdx == timerIdx && singleLane()) ? clock() : 0;
 }
 
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, S32 dep) 
-{ return queryProfilingTimer(timerIdx, (U32)dep); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, F32 dep) 
-{ return queryProfilingTimer(timerIdx, (U32)__float_as_int(dep)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, bool dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep ? 2 : 1)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int2& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int3& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int4& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z | dep.w)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint2& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint3& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint4& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z | dep.w)); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float2& dep) 
-{ return queryProfilingTimer( timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y))); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float3& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y) | __float_as_int(dep.z))); }
-
-__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float4& dep) 
-{ return queryProfilingTimer(timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y) | __float_as_int(dep.z) | __float_as_int(dep.w))); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, S32 dep) { return queryProfilingTimer(timerIdx, (U32)dep); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, F32 dep) { return queryProfilingTimer(timerIdx, (U32)__float_as_int(dep)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, bool dep) { return queryProfilingTimer(timerIdx, (U32)(dep ? 2 : 1)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int2& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int3& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const int4& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z | dep.w)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint2& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint3& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const uint4& dep) { return queryProfilingTimer(timerIdx, (U32)(dep.x | dep.y | dep.z | dep.w)); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float2& dep) { return queryProfilingTimer(timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y))); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float3& dep) { return queryProfilingTimer(timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y) | __float_as_int(dep.z))); }
+__device__ __inline__ U32 queryProfilingTimer(int timerIdx, const float4& dep) { return queryProfilingTimer(timerIdx, (U32)(__float_as_int(dep.x) | __float_as_int(dep.y) | __float_as_int(dep.z) | __float_as_int(dep.w))); }
 
 //------------------------------------------------------------------------
 
-__device__ __inline__
-void writeProfilingTimer(U32 timerTotal)
+__device__ __inline__ void writeProfilingTimer(U32 timerTotal)
 {
     int numTimers = sizeof(CRProfTimerOrder) - 1;
     int warpIdx = threadIdx.y + blockDim.y * (blockIdx.x + gridDim.x * blockIdx.y);
@@ -211,8 +191,7 @@ void writeProfilingTimer(U32 timerTotal)
 
 //------------------------------------------------------------------------
 
-__device__ __inline__
-void writeProfilingTimerLargeGrid(U32 timerTotal)
+__device__ __inline__ void writeProfilingTimerLargeGrid(U32 timerTotal)
 {
     __shared__ volatile U32 s_warpTotal[48];
     s_warpTotal[threadIdx.y] = 0;
@@ -238,10 +217,7 @@ void writeProfilingTimerLargeGrid(U32 timerTotal)
 // Pixel pipe definition.
 //------------------------------------------------------------------------
 
-#define CR_DEFINE_PIXEL_PIPE( PIPE_NAME, \
-                              VERTEX_STRUCT, \
-                              FRAGMENT_SHADER, BLEND_SHADER, \
-                              SAMPLES_LOG2, RENDER_MODE_FLAGS) \
+#define CR_DEFINE_PIXEL_PIPE(PIPE_NAME, VERTEX_STRUCT, FRAGMENT_SHADER, BLEND_SHADER, SAMPLES_LOG2, RENDER_MODE_FLAGS) \
     \
     extern "C" __global__ void __launch_bounds__(CR_SETUP_WARPS * 32, CR_SETUP_OPT_BLOCKS) PIPE_NAME ## _triangleSetup(void) \
     { \

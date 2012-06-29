@@ -1,17 +1,28 @@
 /*
- *  Copyright 2010-2011 NVIDIA Corporation
+ *  Copyright (c) 2009-2011, NVIDIA Corporation
+ *  All rights reserved.
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *      * Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
+ *      * Redistributions in binary form must reproduce the above copyright
+ *        notice, this list of conditions and the following disclaimer in the
+ *        documentation and/or other materials provided with the distribution.
+ *      * Neither the name of NVIDIA Corporation nor the
+ *        names of its contributors may be used to endorse or promote products
+ *        derived from this software without specific prior written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *  DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+ *  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ *  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 //------------------------------------------------------------------------
@@ -19,15 +30,10 @@
 //------------------------------------------------------------------------
 
 template <int SamplesLog2>
-__device__ __inline__ 
-void computeBarys( Vec3f& bary, 
-                   Vec3f& baryDX, 
-                   Vec3f& baryDY,
-                   const Vec3i& wpleq, 
-                   const Vec3i& upleq, 
-                   const Vec3i& vpleq,
-                   int sampleX, 
-                   int sampleY)
+__device__ __inline__ void computeBarys(
+    Vec3f& bary, Vec3f& baryDX, Vec3f& baryDY,
+    const Vec3i& wpleq, const Vec3i& upleq, const Vec3i& vpleq,
+    int sampleX, int sampleY)
 {
     F32 w = 1.0f / (F32)(wpleq.x * sampleX + wpleq.y * sampleY + wpleq.z);
     F32 u = w * (F32)(upleq.x * sampleX + upleq.y * sampleY + upleq.z);
@@ -46,14 +52,9 @@ void computeBarys( Vec3f& bary,
 //------------------------------------------------------------------------
 
 template <class VertexClass, class FragmentShaderClass, int SamplesLog2, U32 RenderModeFlags>
-__device__ __inline__ 
-void runFragmentShader( FragmentShaderClass& fs,
-                        int triIdx, 
-                        int dataIdx, 
-                        int pixelX, 
-                        int pixelY, 
-                        U32 centroid, 
-                        volatile U32* shared)
+__device__ __inline__ void runFragmentShader(
+    FragmentShaderClass& fs,
+    int triIdx, int dataIdx, int pixelX, int pixelY, U32 centroid, volatile U32* shared)
 {
     // Initialize.
 
@@ -69,6 +70,7 @@ void runFragmentShader( FragmentShaderClass& fs,
     fs.m_discard        = false;
 
     // Interpolation disabled => sample varyings at the last vertex.
+
     if ((RenderModeFlags & RenderModeFlag_EnableLerp) == 0)
     {
         fs.m_center     = Vec3f(0.0f, 0.0f, 1.0f);
@@ -81,9 +83,11 @@ void runFragmentShader( FragmentShaderClass& fs,
     }
 
     // Interpolation enabled => compute barys.
+
     else
     {
         // Fetch pleqs.
+
         uint4 t1 = tex1Dfetch(t_triData, dataIdx * 4 + 1); // wx, wy, wb, ux
         uint4 t2 = tex1Dfetch(t_triData, dataIdx * 4 + 2); // uy, ub, vx, vy
         Vec3i wpleq(t1.x, t1.y, t1.z);
@@ -91,6 +95,7 @@ void runFragmentShader( FragmentShaderClass& fs,
         Vec3i vpleq(t2.z, t2.w, t3.x);
 
         // Compute barys for pixel center.
+
         computeBarys<SamplesLog2>(
             fs.m_center, fs.m_centerDX,
             fs.m_centerDY, wpleq, upleq, vpleq,
@@ -98,6 +103,7 @@ void runFragmentShader( FragmentShaderClass& fs,
             (pixelY * 2 + 1) << SamplesLog2);
 
         // Compute barys for triangle centroid.
+
         if (SamplesLog2 == 0)
         {
             fs.m_centroid = fs.m_center;
@@ -115,20 +121,16 @@ void runFragmentShader( FragmentShaderClass& fs,
     }
 
     // Run shader.
+
     fs.run();
 }
 
 //------------------------------------------------------------------------
 
 template <class BlendShaderClass>
-__device__ __inline__ 
-void runBlendShader( BlendShaderClass& bs,
-                     int triIdx, 
-                     int pixelX, 
-                     int pixelY, 
-                     int sampleIdx, 
-                     U32 src, 
-                     U32 dst)
+__device__ __inline__ void runBlendShader(
+    BlendShaderClass& bs,
+    int triIdx, int pixelX, int pixelY, int sampleIdx, U32 src, U32 dst)
 {
     bs.m_triIdx     = triIdx;
     bs.m_pixelPos   = Vec2i(pixelX, pixelY);
@@ -147,8 +149,7 @@ void runBlendShader( BlendShaderClass& bs,
 //------------------------------------------------------------------------
 
 template <int SamplesLog2>
-__device__ __inline__ 
-void setupCentroidLUT(volatile U8* lut)
+__device__ __inline__ void setupCentroidLUT(volatile U8* lut)
 {
     for (int mask = threadIdx.x + threadIdx.y * 32; mask < (1 << (1 << SamplesLog2)); mask += blockDim.y * 32)
     {
@@ -165,16 +166,14 @@ void setupCentroidLUT(volatile U8* lut)
 
 //------------------------------------------------------------------------
 
-__device__ __inline__ 
-void initTileZMax(U32& tileZMax, bool& tileZUpd, volatile U32* tileDepth)
+__device__ __inline__ void initTileZMax(U32& tileZMax, bool& tileZUpd, volatile U32* tileDepth)
 {
     tileZMax = CR_DEPTH_MAX;
     tileZUpd = (::min(tileDepth[threadIdx.x], tileDepth[threadIdx.x + 32]) < tileZMax);
 }
 
 template <U32 RenderModeFlags>
-__device__ __inline__ 
-void updateTileZMax(U32& tileZMax, bool& tileZUpd, volatile U32* tileDepth, volatile U32* temp)
+__device__ __inline__ void updateTileZMax(U32& tileZMax, bool& tileZUpd, volatile U32* tileDepth, volatile U32* temp)
 {
     if ((RenderModeFlags & RenderModeFlag_EnableDepth) != 0 && __any(tileZUpd))
     {
@@ -308,34 +307,41 @@ __device__ __inline__ U32 triangleSampleCoverage(const uint4& triHeader, int pix
 
 __device__ __inline__ U32 scan32_value(U32 value, volatile U32* temp)
 {
-  temp[threadIdx.x + 16] = value;
-  value += temp[threadIdx.x + 16 -  1], temp[threadIdx.x + 16] = value;
-  value += temp[threadIdx.x + 16 -  2], temp[threadIdx.x + 16] = value;
-  value += temp[threadIdx.x + 16 -  4], temp[threadIdx.x + 16] = value;
-  value += temp[threadIdx.x + 16 -  8], temp[threadIdx.x + 16] = value;
-  value += temp[threadIdx.x + 16 - 16], temp[threadIdx.x + 16] = value;
-  return value;
+    temp[threadIdx.x + 16] = value;
+    value += temp[threadIdx.x + 16 -  1], temp[threadIdx.x + 16] = value;
+    value += temp[threadIdx.x + 16 -  2], temp[threadIdx.x + 16] = value;
+    value += temp[threadIdx.x + 16 -  4], temp[threadIdx.x + 16] = value;
+    value += temp[threadIdx.x + 16 -  8], temp[threadIdx.x + 16] = value;
+    value += temp[threadIdx.x + 16 - 16], temp[threadIdx.x + 16] = value;
+    return value;
 }
 
 __device__ __inline__ volatile const U32& scan32_total(volatile U32* temp)
 {
-  return temp[47];
+    return temp[47];
 }
 
 //------------------------------------------------------------------------
 
 template <class BlendShaderClass, U32 RenderModeFlags>
-__device__ __inline__ uint2 getROPLane(void)
+__device__ __inline__ U32 determineROPLaneMask(volatile U32& warpTemp) // mask of lanes that should process an earlier fragment than this lane
 {
-  if ((RenderModeFlags & RenderModeFlag_EnableDepth) == 0)
-  {
-    BlendShaderClass bs;
-    if (!bs.needsDst()) {
-      return make_uint2(threadIdx.x, getLaneMaskLt());
+    bool reverseLanes = true;
+    if ((RenderModeFlags & RenderModeFlag_EnableDepth) == 0)
+    {
+        BlendShaderClass bs;
+        if (!bs.needsDst())
+            reverseLanes = false;
     }
-  }
-  
-  return make_uint2(31 - threadIdx.x, getLaneMaskGt());
+
+    U32 mask = (reverseLanes) ? (1u << threadIdx.x) : ~0u;
+    do
+    {
+        warpTemp = threadIdx.x;
+        mask ^= 1u << warpTemp;
+    }
+    while (warpTemp != threadIdx.x);
+    return mask;
 }
 
 template <U32 RenderModeFlags>
@@ -527,6 +533,7 @@ __device__ __inline__ void fineRasterImpl_SingleSample(void)
     CR_TIMER_INIT();
 	CR_TIMER_IN(FineTotal);
 
+    U32 ropLaneMask = determineROPLaneMask<BlendShaderClass, RenderModeFlags>(temp[0]);
     temp[threadIdx.x] = 0; // first 16 elements of temp are always zero
     cover8x8_setupLUT(s_cover8x8_lut);
     __syncthreads();
@@ -661,15 +668,15 @@ __device__ __inline__ void fineRasterImpl_SingleSample(void)
                     temp[idx + 16 - 1] = 1;
             }
 
-            uint2 ropLane = getROPLane<BlendShaderClass, RenderModeFlags>(); // index, mask
-            U32 boundaryMask = __ballot(temp[ropLane.x + 16]);
+            int ropLaneIdx = __popc(ropLaneMask);
+            U32 boundaryMask = __ballot(temp[ropLaneIdx + 16]);
 
             // distribute fragments
             CR_TIMER_OUT_DEP(FineFragmentDistr, boundaryMask);
-            if (ropLane.x < fragWrite - fragRead)
+            if (ropLaneIdx < fragWrite - fragRead)
             {
-                int triBufIdx = (triRead + __popc(boundaryMask & ropLane.y)) & 63;
-                int fragIdx = add_sub(fragRead, ropLane.x, triangleFrag[(triBufIdx - 1) & 63]);
+                int triBufIdx = (triRead + __popc(boundaryMask & ropLaneMask)) & 63;
+                int fragIdx = add_sub(fragRead, ropLaneIdx, triangleFrag[(triBufIdx - 1) & 63]);
                 CR_TIMER_IN(FineFindBit);
                 U64 coverage = triangleCov[triBufIdx];
                 int pixelInTile = findFragment<RenderModeFlags>(coverage, fragIdx);
@@ -882,6 +889,7 @@ __device__ __inline__ void fineRasterImpl_MultiSample(void)
     CR_TIMER_INIT();
     CR_TIMER_IN(FineTotal);
 
+    U32 ropLaneMask = determineROPLaneMask<BlendShaderClass, RenderModeFlags>(temp[0]);
     temp[threadIdx.x] = 0; // first 16 elements of temp are always zero
     cover8x8_setupLUT(s_cover8x8_lut);
     setupCentroidLUT<SamplesLog2>(s_centroid_lut);
@@ -1009,15 +1017,15 @@ __device__ __inline__ void fineRasterImpl_MultiSample(void)
                     temp[idx + 16 - 1] = 1;
             }
 
-            uint2 ropLane = getROPLane<BlendShaderClass, RenderModeFlags>(); // index, mask
-            U32 boundaryMask = __ballot(temp[ropLane.x + 16]);
+            int ropLaneIdx = __popc(ropLaneMask);
+            U32 boundaryMask = __ballot(temp[ropLaneIdx + 16]);
 
             // distribute fragments
             CR_TIMER_OUT_DEP(FineFragmentDistr, boundaryMask);
-            if (ropLane.x < fragWrite - fragRead)
+            if (ropLaneIdx < fragWrite - fragRead)
             {
-                int triBufIdx = (triRead + __popc(boundaryMask & ropLane.y)) & 63;
-                int fragIdx = add_sub(fragRead, ropLane.x, triangleFrag[(triBufIdx - 1) & 63]);
+                int triBufIdx = (triRead + __popc(boundaryMask & ropLaneMask)) & 63;
+                int fragIdx = add_sub(fragRead, ropLaneIdx, triangleFrag[(triBufIdx - 1) & 63]);
                 CR_TIMER_IN(FineFindBit);
                 U64 coverage = triangleCov[triBufIdx];
                 int pixelInTile = findFragment<RenderModeFlags>(coverage, fragIdx);

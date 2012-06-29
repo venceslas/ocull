@@ -37,32 +37,36 @@ struct Mesh
   
   
   public:
+    Mesh() {}
+    
     // GL mesh
-    Mesh( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
-          unsigned int ibo, size_t iOffset, size_t iCount)
+    void set( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
+              unsigned int ibo, size_t iOffset, size_t iCount)
     {
-      vertex.buffer.wrapGL(vbo);
+      assert( "occullScene::set (GL)" && 0 );
+      
+      //vertex.buffer.wrapGL(vbo);
       vertex.offset = vOffset;
       vertex.count  = vCount;
       vertex.stride = vStride;
       
-      vertex.buffer.wrapGL(ibo);
+      //vertex.buffer.wrapGL(ibo);
       vertex.offset = iOffset;
       vertex.count = iCount;
     }
     
     // CPU mesh
-    Mesh( float *vertices, size_t vCount,
-          unsigned int *indices,  size_t iCount)
+    void set( const float *vertices, size_t vCount,
+              const unsigned int *indices,  size_t iCount)
     {
-      vertex.buffer.wrapCPU( vertices, vCount * 3u * sizeof(float));
+      vertex.buffer.set( vertices, vCount * 3 * sizeof(float) );
       vertex.offset = 0u;
       vertex.count = vCount;
-      vertex.stride = 0u;   
+      vertex.stride = 0u;
       
-      index.buffer.wrapCPU( indices, iCount * sizeof(unsigned int));
+      index.buffer.set( indices, iCount * sizeof(unsigned int) );
       index.offset = 0u;
-      index.count = iCount; 
+      index.count = iCount;
     }
     
     inline unsigned int getTriangleCount() const {return index.count / 3u;}

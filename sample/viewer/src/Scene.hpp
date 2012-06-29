@@ -37,23 +37,29 @@ class Scene
     // cube mesh to display the main frustum
     engine::VertexBuffer m_cubeWire;
     
-    engine::Program m_program;
+    // Default program shader for rendering
+    engine::Program m_passthroughPS;
     
-    ///    
+    // Screen shader used for screen-mapping
+    unsigned int m_screenmappingVAO;
+    engine::Program m_screenmappingPS;
+    
+    
+    ///
     ocull::Context *m_ocullContext;
-    ocull::Query *m_ocullQuery;
+    ocull::Query *m_ocullQuery;    
     ocull::Camera m_ocullCamera;
-    ocull::Mesh *m_ocullMesh;
+    ocull::Mesh m_ocullMesh;
     ///
     
-  
-  
+    
   public:
     Scene();
     ~Scene();
     
     void init(const char *filename);    
     void run(Data &data);
+  
     
   private:
     void initGeometry(const char *filename);
@@ -66,6 +72,9 @@ class Scene
     
     void renderMainFrustum(const engine::Camera &mainCamera,
                            const engine::Camera &debugCamera);
+
+    void screenMapping(const unsigned int textureId);
+    
 };
 
 }
