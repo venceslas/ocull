@@ -24,6 +24,8 @@
 #include "CudaRaster.hpp"
 #include <cstring>
 
+#include <iostream>
+
 
 namespace FW {
 
@@ -363,6 +365,8 @@ void CudaRaster::drawTriangles(void)
       }
     }
 
+
+
     // No overflows => done.
     const CRAtomics& atomics = *(const CRAtomics*)m_module->getGlobal("g_crAtomics").getPtr();
     
@@ -646,7 +650,7 @@ void CudaRaster::launchStages(void)
     m_triHeader.getCudaPtr();
     m_triData.getCudaPtr();
   }
-
+  
   // Launch binRaster().
   CudaModule::checkError("cuEventRecord", cuEventRecord(m_evBinBegin, NULL));
 
@@ -705,7 +709,42 @@ void CudaRaster::launchStages(void)
   CudaModule::setPreferL1OverShared(oldPreferL1);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //------------------------------------------------------------------------
+
+//  Rasterizer emulation -------------------------------------------------
+
+//------------------------------------------------------------------------
+
+
 
 Vec3i CudaRaster::setupPleq(const Vec3f& values, const Vec2i& v0,
                             const Vec2i& d1, const Vec2i& d2, 

@@ -14,6 +14,8 @@
 #include "ocullScene.hpp"
 
 
+#include <cudaGL.h>
+
 
 namespace ocull {
 
@@ -108,7 +110,7 @@ void Context::begin(Query *pQuery)
 void Context::end()
 {
   assert( isQueryBounded() == true );
-    
+  
   /// Unbound the query
   m_pQuery = NULL;
 }
@@ -143,52 +145,40 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   Query::Result &result = m_pQuery->m_result; //
   result.objectCount += 1u;
   result.trianglePassedCount += pMesh->getTriangleCount();
-  
-  /// Compute the ModelViewProjection matrix
-  const Matrix4x4 &viewProj = m_pQuery->m_camera.getViewProjMatrix();
-  Matrix4x4 mvp = viewProj * modelMatrix;
-  
+    
   
   /// Resize the output vertices buffer
   size_t vertexSize = pMesh->vertex.count * sizeof(FW::ShadedVertex_passthrough);
-  m_outVertices.resizeDiscard( vertexSize );  
+  m_outVertices.resizeDiscard( vertexSize );  //
   
+  // Vertex Shader
+  runVertexShader( pMesh, modelMatrix);  
   
-  /// Map constants (kind of GLSL's uniforms) parameters
-  FW::Constants& c = *(FW::Constants*)
-                      m_cudaModule->getGlobal("c_constants").getMutablePtrDiscard();
+//
+CUgraphicsResource cuda_ibo;
+cuGraphicsGLRegisterBuffer( &cuda_ibo, pMesh->index.buffer.getGLBuffer(), 
+                            CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY);
+
+CUdeviceptr pDevice = NULL;
+size_t size = 0u;
+
+cuGraphicsMapResources( 1, &cuda_ibo, NULL);
+cuGraphicsResourceGetMappedPointer( &pDevice, &size, cuda_ibo);
+
+FW::Buffer index_buffer;
+index_buffer.wrapCuda(pDevice, pMesh->getTriangleCount() * 3 * sizeof(unsigned int));
+//
   
-  /// Translate custom matrix as CudaRaster Framework matrix (yeah.. what ?)
-# define COPY_MAT(i,j)  c.posToClip.m##i##j = mvp[j][i]
-  COPY_MAT(0, 0); COPY_MAT(0, 1); COPY_MAT(0, 2); COPY_MAT(0, 3);
-  COPY_MAT(1, 0); COPY_MAT(1, 1); COPY_MAT(1, 2); COPY_MAT(1, 3);
-  COPY_MAT(2, 0); COPY_MAT(2, 1); COPY_MAT(2, 2); COPY_MAT(2, 3);
-  COPY_MAT(3, 0); COPY_MAT(3, 1); COPY_MAT(3, 2); COPY_MAT(3, 3);
-# undef COPY_MAT
-  
-  
-  
-  /**/
-  
-  //std::cerr << __FUNCTION__ << " : unfinished." << std::endl;
-  
-  // Not sure at all for this, I think I have to send the vbo's with getGLPtr() or something
-  int ofs = 0;
-  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, pMesh->vertex.buffer.getCudaPtr());
-  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, m_outVertices.getMutableCudaPtrDiscard());
-  ofs += m_cudaModule->setParami  ( m_vsKernel, ofs, pMesh->vertex.count);
-  // XXX TODO set vertex stride & offset XXX
-  
-  FW::Vec2i blockSize(32, 4);
-  int numBlocks = (pMesh->vertex.count - 1u) / (blockSize.x * blockSize.y) + 1;
-  m_cudaModule->launchKernel( m_vsKernel, blockSize, numBlocks);
-  
-  /// Sent transformed vertices to the pipeline
+  // Pipeline
   m_rasterizer.setVertexBuffer( &m_outVertices, 0);
-  m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());
+  //m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());
+  m_rasterizer.setIndexBuffer( &index_buffer, 0, pMesh->getTriangleCount());
   m_rasterizer.drawTriangles();
-  
-  /**/
+
+//
+cuGraphicsUnmapResources( 1, &cuda_ibo, NULL);
+cuGraphicsUnregisterResource( cuda_ibo );
+//
 }
 
 
@@ -219,5 +209,41 @@ Context::~Context()
   OCULL_SAFEDELETE( m_colorBuffer ) //tmp  
 }
 
+
+void Context::runVertexShader( ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix)
+{
+  /// Map constants parameters (like GLSL's uniforms)
+  FW::Constants& c = *(FW::Constants*)
+                      m_cudaModule->getGlobal("c_constants").getMutablePtrDiscard();
+
+
+  // Compute the ModelViewProjection matrix
+  const Matrix4x4 &viewProj = m_pQuery->m_camera.getViewProjMatrix();
+  Matrix4x4 mvp = viewProj * modelMatrix;
+
+  // Translate custom matrix as CudaRaster Framework matrix (yeah.. what ?)
+# define COPY_MAT(i,j)  c.posToClip.m##i##j = mvp[j][i]
+  COPY_MAT(0, 0); COPY_MAT(0, 1); COPY_MAT(0, 2); COPY_MAT(0, 3);
+  COPY_MAT(1, 0); COPY_MAT(1, 1); COPY_MAT(1, 2); COPY_MAT(1, 3);
+  COPY_MAT(2, 0); COPY_MAT(2, 1); COPY_MAT(2, 2); COPY_MAT(2, 3);
+  COPY_MAT(3, 0); COPY_MAT(3, 1); COPY_MAT(3, 2); COPY_MAT(3, 3);
+# undef COPY_MAT
+
+  //-------
+    
+  /// Set input parameters
+  int ofs = 0;
+  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, pMesh->vertex.buffer.getCudaPtr());
+  ofs += m_cudaModule->setParamPtr( m_vsKernel, ofs, m_outVertices.getMutableCudaPtrDiscard());
+  ofs += m_cudaModule->setParami  ( m_vsKernel, ofs, pMesh->vertex.count);  
+  // XXX TODO set vertex stride & offset XXX
+
+  //-------
+  
+  /// Run the vertex shader kernel
+  FW::Vec2i blockSize(32, 4);
+  int numBlocks = (pMesh->vertex.count - 1u) / (blockSize.x * blockSize.y) + 1;
+  m_cudaModule->launchKernel( m_vsKernel, blockSize, numBlocks);
+}
 
 } //namespace ocull

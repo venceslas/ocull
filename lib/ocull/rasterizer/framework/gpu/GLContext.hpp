@@ -40,7 +40,7 @@ class GLContext
   public:
     static void staticInit(void)
     {
-      fprintf( stderr, "%s %s : [TODO] remove", __FILE__, __FUNCTION__ );
+      fprintf( stderr, "%s %s : [TODO] remove\n", __FILE__, __FUNCTION__ );
       /*
       static bool bInit=false;
       

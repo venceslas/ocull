@@ -43,14 +43,15 @@ struct Mesh
     void set( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
               unsigned int ibo, size_t iOffset, size_t iCount)
     {
-      assert( "occullScene::set (GL)" && 0 );
+      //assert( "occullScene::set (GL)" && 0 );
+      fprintf( stderr, "## set GL ##\n");
       
-      //vertex.buffer.wrapGL(vbo);
+      vertex.buffer.wrapGL(vbo);//
       vertex.offset = vOffset;
       vertex.count  = vCount;
       vertex.stride = vStride;
       
-      //vertex.buffer.wrapGL(ibo);
+      vertex.buffer.wrapGL(ibo);//
       vertex.offset = iOffset;
       vertex.count = iCount;
     }
@@ -59,7 +60,28 @@ struct Mesh
     void set( const float *vertices, size_t vCount,
               const unsigned int *indices,  size_t iCount)
     {
+      fprintf( stderr, "## set CPU ##\n");
+
       vertex.buffer.set( vertices, vCount * 3 * sizeof(float) );
+      //vertex.buffer.wrapCPU( (void*)vertices, vCount * 3 * sizeof(float) );
+      vertex.offset = 0u;
+      vertex.count = vCount;
+      vertex.stride = 0u;
+      
+      index.buffer.set( indices, iCount * sizeof(unsigned int) );
+      //index.buffer.wrapCPU( (void*)indices, iCount * sizeof(unsigned int) );
+      index.offset = 0u;
+      index.count = iCount;
+    }
+    
+//-------------------------------------
+    // GPU vertices, CPU indices (DEBUG)
+    void setTEST( GLuint vbo, size_t vCount,
+                  const unsigned int *indices,  size_t iCount)
+    {
+      fprintf( stderr, "%s: to remove\n", __FUNCTION__);
+      
+      vertex.buffer.wrapGL(vbo);
       vertex.offset = 0u;
       vertex.count = vCount;
       vertex.stride = 0u;
@@ -68,7 +90,8 @@ struct Mesh
       index.offset = 0u;
       index.count = iCount;
     }
-    
+//-------------------------------------
+
     inline unsigned int getTriangleCount() const {return index.count / 3u;}
 };
 

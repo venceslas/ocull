@@ -25,6 +25,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <vector>
 #include <cudaGL.h>
 
@@ -760,14 +761,14 @@ void Buffer::memcpyXtoX(void* dstHost, CUdeviceptr dstDevice,
   }
   else
   {
-      //profilePush("cuMemcpyDtoD");
+    //profilePush("cuMemcpyDtoD");
 #if (CUDA_VERSION >= 3000)
-      if (async) {// && isAvailable_cuMemcpyDtoDAsync())
-        res = cuMemcpyDtoDAsync(dstDevice, srcDevice, (U32)size, cudaStream);
-      } else
+    if (async)// && isAvailable_cuMemcpyDtoDAsync())
+      res = cuMemcpyDtoDAsync(dstDevice, srcDevice, (U32)size, cudaStream);
+    else
 #endif
-        res = cuMemcpyDtoD(dstDevice, srcDevice, (U32)size);
-      //profilePop();
+      res = cuMemcpyDtoD(dstDevice, srcDevice, (U32)size);
+    //profilePop();
   }
 
   // Success => done.
@@ -777,6 +778,7 @@ void Buffer::memcpyXtoX(void* dstHost, CUdeviceptr dstDevice,
   
   // Single byte => fail.
   if (size == 1) {
+    std::cerr << __FILE__ << " : l" << __LINE__ << std::endl;
     CudaModule::checkError("cuMemcpyXtoX", res);
   }
 

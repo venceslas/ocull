@@ -68,7 +68,7 @@ class Query
     /// Return the depthbuffer size
     const ocull::Vector2i getSize();
     
-    //getDepthBuffer();
+    FW::CudaSurface* getDepthBuffer() {return m_depthBuffer;}//
     
     inline const Result& getResults() {return m_result;}
     

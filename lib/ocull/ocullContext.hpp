@@ -39,7 +39,7 @@ class Context
     
     // [DEBUG only] (to remove later)
     FW::CudaSurface *m_colorBuffer;
-    
+
     
   public:
     static Context* Create(const std::string &pipeCubinFile);
@@ -64,6 +64,8 @@ class Context
     
     // true between begin() / end(), false otherwise
     inline bool isQueryBounded() { return m_pQuery != NULL; }
+    
+    void runVertexShader(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix);
   
     
   // forbidden methods

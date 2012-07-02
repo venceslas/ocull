@@ -195,8 +195,8 @@ void Scene::updateGeometry()
       // Indices
       std::vector<GLuint> &indices = p->getIndices();
       indices.assign( m->triangleList, &(m->triangleList[3*m->numTriangles]) );
-
-            
+      
+      
       p->generate();//
       p->complete( GL_STATIC_DRAW ); //
 
@@ -207,15 +207,19 @@ void Scene::updateGeometry()
       // OpenGL
       m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
                        p->getIBO(), 0u, p->getNumIndices());
-#     else
+#     elif 0
       // Cuda array
       m_ocullMesh.set( vertices, positions.size(),
                        &indices[0], indices.size());
+#     else
+      // strangely passing VBOs works, but passing IBOs does not
+      m_ocullMesh.setTEST( p->getVBO(), p->getNumVertices(),
+                           &indices[0], indices.size());
 #     endif
       ///----
-
       
-      p->cleanData();
+      
+      p->cleanData();      
       
       
       m_meshInit[i] = true;
@@ -268,7 +272,9 @@ void Scene::run(Data &data)
   
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  screenMapping( m_ocullContext->getColorTexture() );
+  
+  //screenMapping( m_ocullContext->getColorTexture() );
+  screenMapping( m_ocullQuery->getDepthBuffer()->getGLTexture() );
     
   /**/
   ///-----------
