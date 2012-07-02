@@ -199,11 +199,11 @@ void Scene::updateGeometry()
       
       p->generate();//
       p->complete( GL_STATIC_DRAW ); //
-
-
+      
+      
       ///----
       /// setup Ocull Scene
-#     if 0
+#     if 1
       // OpenGL
       m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
                        p->getIBO(), 0u, p->getNumIndices());

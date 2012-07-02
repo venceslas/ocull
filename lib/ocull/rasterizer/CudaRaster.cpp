@@ -296,8 +296,11 @@ void CudaRaster::drawTriangles(void)
   if (!m_vertexBuffer)
     fail("CudaRaster: Vertex buffer not set!");
 
-  if (!m_indexBuffer)
-    fail("CudaRaster: Index buffer not set!");
+  if (!m_indexBuffer) {
+    fail("CudaRaster: Index buffer not set!");  
+    //fprintf( stderr, "CudaRaster: Index buffer not set!\n");
+  }
+    
 
   if (m_pipeSpec.samplesLog2 != m_colorBuffer->getSamplesLog2())
     fail("CudaRaster: Mismatch in multisampling between pixel pipe and surface!");
@@ -561,6 +564,7 @@ void CudaRaster::launchStages(void)
     p.numTris           = m_numTris;
     p.vertexBuffer      = m_vertexBuffer->getCudaPtr(m_vertexOfs);
     p.indexBuffer       = m_indexBuffer->getCudaPtr(m_indexOfs);
+    //p.indexBuffer = *m_pDevice;
 
     p.viewportWidth     = m_viewportSize.x;
     p.viewportHeight    = m_viewportSize.y;
@@ -711,6 +715,24 @@ void CudaRaster::launchStages(void)
 
 
 
+/*
+//
+void CudaRaster::setIndexBuffer_TEST(CUdeviceptr* pDevice, int numTris)
+{
+  assert( pDevice != NULL );
+  
+  m_pDevice = pDevice;
+  m_indexOfs = 0;
+  m_numTris = numTris;
+}
+*/
+
+//----------------------------------------------------------------------------
+
+
+
+
+
 
 
 
@@ -743,6 +765,9 @@ void CudaRaster::launchStages(void)
 //  Rasterizer emulation -------------------------------------------------
 
 //------------------------------------------------------------------------
+
+
+
 
 
 

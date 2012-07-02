@@ -148,7 +148,7 @@ class CudaRaster
 
     // Set before calling other methods.
     void setSurfaces(CudaSurface* color, CudaSurface* depth);
-    
+
     // Clear surfaces on the next call to drawTriangles().
     void deferredClear(const Vec4f& color = 0.0f, F32 depth = 1.0f);
 
@@ -157,6 +157,11 @@ class CudaRaster
     void setVertexBuffer(Buffer* buf, S64 ofs);
     void setIndexBuffer(Buffer* buf, S64 ofs, int numTris);
     
+    //
+    void setIndexBuffer_TEST(CUdeviceptr* pDevice, int numTris);//
+    CUdeviceptr* m_pDevice;
+    //
+
     // Draw all triangles specified by the current index buffer.
     void drawTriangles(void);
 
@@ -166,10 +171,13 @@ class CudaRaster
     std::string getProfilingInfo(void);
     
     void setDebugParams(const DebugParams& p);
+    
 
   private:
     void launchStages(void);
 
+
+//---------
     Vec3i setupPleq(const Vec3f& values, const Vec2i& v0, const Vec2i& d1, 
                     const Vec2i& d2, S32 area, int samplesLog2);
 
@@ -182,6 +190,7 @@ class CudaRaster
     void emulateBinRaster(void);
     void emulateCoarseRaster(void);
     void emulateFineRaster(void);
+//---------
 
   private:
     CudaRaster (const CudaRaster&);             // forbidden

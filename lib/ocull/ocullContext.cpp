@@ -154,7 +154,8 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   // Vertex Shader
   runVertexShader( pMesh, modelMatrix);  
   
-//
+//------------------------------
+/*
 CUgraphicsResource cuda_ibo;
 cuGraphicsGLRegisterBuffer( &cuda_ibo, pMesh->index.buffer.getGLBuffer(), 
                             CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY);
@@ -164,21 +165,22 @@ size_t size = 0u;
 
 cuGraphicsMapResources( 1, &cuda_ibo, NULL);
 cuGraphicsResourceGetMappedPointer( &pDevice, &size, cuda_ibo);
-
-FW::Buffer index_buffer;
-index_buffer.wrapCuda(pDevice, pMesh->getTriangleCount() * 3 * sizeof(unsigned int));
-//
+*/
+//------------------------------
   
   // Pipeline
   m_rasterizer.setVertexBuffer( &m_outVertices, 0);
-  //m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());
-  m_rasterizer.setIndexBuffer( &index_buffer, 0, pMesh->getTriangleCount());
+  m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());  
+  //m_rasterizer.setIndexBuffer_TEST( &pDevice, pMesh->getTriangleCount());
+  
   m_rasterizer.drawTriangles();
 
-//
+//------------------------------
+/*
 cuGraphicsUnmapResources( 1, &cuda_ibo, NULL);
 cuGraphicsUnregisterResource( cuda_ibo );
-//
+*/
+//------------------------------
 }
 
 

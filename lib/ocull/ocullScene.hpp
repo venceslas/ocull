@@ -73,7 +73,7 @@ struct Mesh
       index.offset = 0u;
       index.count = iCount;
     }
-    
+
 //-------------------------------------
     // GPU vertices, CPU indices (DEBUG)
     void setTEST( GLuint vbo, size_t vCount,
