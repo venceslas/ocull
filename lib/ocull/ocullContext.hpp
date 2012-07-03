@@ -38,7 +38,7 @@ class Context
     ocull::Query *m_pQuery;
     
     // [DEBUG only] (to remove later)
-    FW::CudaSurface *m_colorBuffer;
+    FW::CudaSurface *m_colorBuffer;//
 
     
   public:
@@ -55,7 +55,7 @@ class Context
     void uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix);
     
     // [DEBUG only] (to remove later)
-    unsigned int getColorTexture();
+    unsigned int getColorTexture();//
   
   
   private:

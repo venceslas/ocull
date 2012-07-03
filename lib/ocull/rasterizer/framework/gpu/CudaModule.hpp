@@ -144,7 +144,7 @@ class CudaModule
     
     static void sync(bool yield = true);    
     
-    static void checkError(const char* funcName, CUresult res);    
+    static void checkError(const char* funcName, CUresult res);
     
     static const char* decodeError(CUresult res);
     

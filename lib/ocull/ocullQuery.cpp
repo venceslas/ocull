@@ -43,8 +43,7 @@ void Query::resize(unsigned int width, unsigned int height)
   {    
     if (bufferSize == m_depthBuffer->getSize()) {
       return;
-    }
-    
+    }    
     delete m_depthBuffer;
   }
   

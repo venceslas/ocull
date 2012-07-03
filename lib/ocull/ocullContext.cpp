@@ -13,7 +13,6 @@
 #include "ocullQuery.hpp"
 #include "ocullScene.hpp"
 
-
 #include <cudaGL.h>
 
 
@@ -22,39 +21,33 @@ namespace ocull {
 
 // STATIC methods  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
-
 Context* Context::Create(const std::string &pipeCubinFile)
 {
   Context *context = new Context();
   
   
-  // --------
-  
   /// Load the precompiled pipeline shaders
+  FW::CudaModule *module = new FW::CudaModule(pipeCubinFile); 
   
-  context->m_cudaModule = new FW::CudaModule(pipeCubinFile);
-  
-  if (NULL == context->m_cudaModule) 
+  if (NULL == module) 
   {
     std::cerr << __FUNCTION__ 
               << " : invalid argument \""  << pipeCubinFile << "\"."
               << std::endl;
     return NULL;
-  }
-    
+  }  
+  context->m_cudaModule = module;
   
-  /// Initialized CudaRaster
   
+  /// Initialized CudaRaster  
   context->m_rasterizer.init();
   
   // Vertex shader
   size_t paramSize = 1u * sizeof(FW::U32) + 2u * sizeof(CUdeviceptr);
-  context->m_vsKernel = context->m_cudaModule->getKernel( "vertexShader_passthrough", paramSize);
+  context->m_vsKernel = module->getKernel( "vertexShader_passthrough", paramSize);
   
   // Pipeline
-  context->m_rasterizer.setPixelPipe( context->m_cudaModule, "PixelPipe_passthrough");
-  
-  // --------
+  context->m_rasterizer.setPixelPipe( module, "PixelPipe_passthrough");
   
   
   return context;
@@ -64,41 +57,40 @@ Context* Context::Create(const std::string &pipeCubinFile)
 void Context::Release(Context* context)
 {
   assert( context != NULL );
-  delete context;
+  OCULL_SAFEDELETE( context );
 }
     
 
 
 // PUBLIC methods  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
-
 void Context::begin(Query *pQuery)
 {
   assert( isQueryBounded() == false );
   assert( pQuery != NULL );
   
-  /// Set rasterizer parameters
   
-  //---  
+  /// Set rasterizer parameters
+  // -----
   // [TEMPORARY] Reset the color buffer (costly !)  
   
   FW::Vec2i depthSize = pQuery->m_depthBuffer->getSize();
   
   if ((m_colorBuffer != NULL) && (depthSize != m_colorBuffer->getSize())) {
-    delete m_colorBuffer;
+    OCULL_SAFEDELETE(m_colorBuffer);
   }
   
   if (m_colorBuffer == NULL) {
     m_colorBuffer = new FW::CudaSurface( depthSize, FW::CudaSurface::FORMAT_RGBA8, 1u);
   }
   
-  // TODO : fill the depth buffer with the query default depthbuffer (if any)
-  
   // Specify the color (TMP) and depth buffer.
   m_rasterizer.setSurfaces( m_colorBuffer, pQuery->m_depthBuffer);
   m_rasterizer.deferredClear();
-  //---
-  
+    
+  // TODO : fill the depth buffer with the query default depthbuffer (if any)
+  // -----
+    
   /// Reset query results
   pQuery->resetResults();
   
@@ -119,7 +111,7 @@ void Context::end()
 void Context::uploadScene(ocull::Scene *pScene)
 {
   /// It could be improve furthermore, sending buffer of MVPs and proceed
-  /// everything in less Kernels. (Just an idea)
+  /// everything in less Kernels. (Just an idea to explore)
   
   assert( isQueryBounded() == true );
   assert( pScene != NULL );
@@ -170,7 +162,9 @@ cuGraphicsResourceGetMappedPointer( &pDevice, &size, cuda_ibo);
   
   // Pipeline
   m_rasterizer.setVertexBuffer( &m_outVertices, 0);
-  m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), pMesh->index.offset, pMesh->getTriangleCount());  
+  m_rasterizer.setIndexBuffer( &(pMesh->index.buffer), 
+                               pMesh->index.offset, 
+                               pMesh->getTriangleCount());
   //m_rasterizer.setIndexBuffer_TEST( &pDevice, pMesh->getTriangleCount());
   
   m_rasterizer.drawTriangles();

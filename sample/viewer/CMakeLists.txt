@@ -79,7 +79,7 @@ INCLUDE( FindCUDA )
 LINK_LIBRARIES( "-L/usr/lib/nvidia-current -lcuda" )
 
 # removing a warning added with cuda 4.2
-SET( CMAKE_CXX_FLAGS "-Wno-conversion-null")
+SET( CMAKE_CXX_FLAGS "-Wno-conversion-null -g")
 
 
 

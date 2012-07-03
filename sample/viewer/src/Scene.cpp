@@ -92,7 +92,7 @@ void Scene::initGeometry(const char *filename)
   }
 
   /// Retrieve scene datas
-  drn_scene::resolveScene(&m_cache, &m_drnScene, drn_get_chunk(&m_cache, sceneEntryId)); // valgrind errors XXX
+  drn_scene::resolveScene(&m_cache, &m_drnScene, drn_get_chunk(&m_cache, sceneEntryId));
   m_bSceneResolved = true;
   
   /// Resize global buffers
@@ -203,7 +203,7 @@ void Scene::updateGeometry()
       
       ///----
       /// setup Ocull Scene
-#     if 1
+#     if 0
       // OpenGL
       m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
                        p->getIBO(), 0u, p->getNumIndices());
@@ -220,7 +220,6 @@ void Scene::updateGeometry()
       
       
       p->cleanData();      
-      
       
       m_meshInit[i] = true;
     }
@@ -270,13 +269,11 @@ void Scene::run(Data &data)
   m_ocullContext->end();
   
   
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);  
   
   //screenMapping( m_ocullContext->getColorTexture() );
   screenMapping( m_ocullQuery->getDepthBuffer()->getGLTexture() );
-    
-  /**/
+  
   ///-----------
   
 # else
