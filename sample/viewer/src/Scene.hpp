@@ -49,7 +49,6 @@ class Scene
     ocull::Context *m_ocullContext;
     ocull::Query *m_ocullQuery;    
     ocull::Camera m_ocullCamera;
-    ocull::Mesh m_ocullMesh;
     ///
     
     

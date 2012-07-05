@@ -198,23 +198,7 @@ void Scene::updateGeometry()
       
       
       p->generate();//
-      p->complete( GL_STATIC_DRAW ); //
-      
-      
-      ///----
-      /// setup Ocull Scene
-#     if 1
-      // OpenGL
-      m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
-                       p->getIBO(), 0u, p->getNumIndices());
-#     else
-      // Cuda array
-      m_ocullMesh.set( vertices, positions.size(),
-                       &indices[0], indices.size());
-#     endif
-      ///----
-      
-      
+      p->complete( GL_STATIC_DRAW ); //      
       p->cleanData();      
       
       m_meshInit[i] = true;
@@ -240,10 +224,9 @@ void Scene::run(Data &data)
 
   sf::Vector2u windowSize = data.context.handle.getSize();
 
+  /// Use the Occlusion Query library and display the depth buffer [DEBUGGING]
 # if 1
 
-  ///-----------
-  
   if (m_ocullQuery == NULL) {
     m_ocullQuery = new ocull::Query( windowSize.x, windowSize.y);//
   }
@@ -261,7 +244,17 @@ void Scene::run(Data &data)
   ocull::Matrix4x4 identity;
   
   m_ocullContext->begin( m_ocullQuery );
-    m_ocullContext->uploadMesh( &m_ocullMesh, identity);
+    // Not efficient at ALL (could be the multiple FW::Buffer's allocations per frame)
+    for (uint64_t i = 0u; i < m_primitives.size(); ++i)
+    {
+      ocull::Mesh mesh;//
+      engine::VertexBuffer *p = &(m_primitives[i]);
+      
+      mesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
+                p->getIBO(), 0u, p->getNumIndices());
+                
+      m_ocullContext->uploadMesh( &mesh, identity);
+    }
   m_ocullContext->end();
   
   
@@ -270,8 +263,8 @@ void Scene::run(Data &data)
   //screenMapping( m_ocullContext->getColorTexture() );
   screenMapping( m_ocullQuery->getDepthBuffer()->getGLTexture() );
   
-  ///-----------
   
+  /// Display the scene using OpenGL
 # else
 
   // RENDERING

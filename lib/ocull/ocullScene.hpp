@@ -42,10 +42,7 @@ struct Mesh
     // GL mesh
     void set( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
               unsigned int ibo, size_t iOffset, size_t iCount)
-    {
-      //assert( "occullScene::set (GL)" && 0 );
-      fprintf( stderr, "## set GL ##\n");
-      
+    {      
       vertex.buffer.wrapGL(vbo);//
       vertex.offset = vOffset;
       vertex.count  = vCount;
@@ -60,8 +57,6 @@ struct Mesh
     void set( const float *vertices, size_t vCount,
               const unsigned int *indices,  size_t iCount)
     {
-      fprintf( stderr, "## set CPU ##\n");
-
       vertex.buffer.set( vertices, vCount * 3 * sizeof(float) );
       //vertex.buffer.wrapCPU( (void*)vertices, vCount * 3 * sizeof(float) );
       vertex.offset = 0u;
