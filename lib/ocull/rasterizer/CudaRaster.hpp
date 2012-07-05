@@ -157,11 +157,6 @@ class CudaRaster
     void setVertexBuffer(Buffer* buf, S64 ofs);
     void setIndexBuffer(Buffer* buf, S64 ofs, int numTris);
     
-    //
-    void setIndexBuffer_TEST(CUdeviceptr* pDevice, int numTris);//
-    CUdeviceptr* m_pDevice;
-    //
-
     // Draw all triangles specified by the current index buffer.
     void drawTriangles(void);
 

@@ -203,18 +203,14 @@ void Scene::updateGeometry()
       
       ///----
       /// setup Ocull Scene
-#     if 0
+#     if 1
       // OpenGL
       m_ocullMesh.set( p->getVBO(), 0u, p->getNumVertices(), 0u,
                        p->getIBO(), 0u, p->getNumIndices());
-#     elif 0
+#     else
       // Cuda array
       m_ocullMesh.set( vertices, positions.size(),
                        &indices[0], indices.size());
-#     else
-      // strangely passing VBOs works, but passing IBOs does not
-      m_ocullMesh.setTEST( p->getVBO(), p->getNumVertices(),
-                           &indices[0], indices.size());
 #     endif
       ///----
       

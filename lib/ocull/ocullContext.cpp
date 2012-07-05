@@ -146,19 +146,6 @@ void Context::uploadMesh(ocull::Mesh *pMesh, const ocull::Matrix4x4 &modelMatrix
   // Vertex Shader
   runVertexShader( pMesh, modelMatrix);  
   
-//------------------------------
-/*
-CUgraphicsResource cuda_ibo;
-cuGraphicsGLRegisterBuffer( &cuda_ibo, pMesh->index.buffer.getGLBuffer(), 
-                            CU_GRAPHICS_REGISTER_FLAGS_READ_ONLY);
-
-CUdeviceptr pDevice = NULL;
-size_t size = 0u;
-
-cuGraphicsMapResources( 1, &cuda_ibo, NULL);
-cuGraphicsResourceGetMappedPointer( &pDevice, &size, cuda_ibo);
-*/
-//------------------------------
   
   // Pipeline
   m_rasterizer.setVertexBuffer( &m_outVertices, 0);
@@ -168,15 +155,7 @@ cuGraphicsResourceGetMappedPointer( &pDevice, &size, cuda_ibo);
   //m_rasterizer.setIndexBuffer_TEST( &pDevice, pMesh->getTriangleCount());
   
   m_rasterizer.drawTriangles();
-
-//------------------------------
-/*
-cuGraphicsUnmapResources( 1, &cuda_ibo, NULL);
-cuGraphicsUnregisterResource( cuda_ibo );
-*/
-//------------------------------
 }
-
 
 // [DEBUG only] (to remove later)
 unsigned int Context::getColorTexture()
@@ -184,7 +163,6 @@ unsigned int Context::getColorTexture()
   assert( m_colorBuffer != NULL );
   return m_colorBuffer->getGLTexture();
 }
-
 
 
 // PRIVATE methods +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+

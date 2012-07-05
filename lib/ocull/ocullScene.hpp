@@ -51,9 +51,9 @@ struct Mesh
       vertex.count  = vCount;
       vertex.stride = vStride;
       
-      vertex.buffer.wrapGL(ibo);//
-      vertex.offset = iOffset;
-      vertex.count = iCount;
+      index.buffer.wrapGL(ibo);//
+      index.offset = iOffset;
+      index.count = iCount;
     }
     
     // CPU mesh
@@ -74,23 +74,6 @@ struct Mesh
       index.count = iCount;
     }
 
-//-------------------------------------
-    // GPU vertices, CPU indices (DEBUG)
-    void setTEST( GLuint vbo, size_t vCount,
-                  const unsigned int *indices,  size_t iCount)
-    {
-      fprintf( stderr, "%s: to remove\n", __FUNCTION__);
-      
-      vertex.buffer.wrapGL(vbo);
-      vertex.offset = 0u;
-      vertex.count = vCount;
-      vertex.stride = 0u;
-      
-      index.buffer.set( indices, iCount * sizeof(unsigned int) );
-      index.offset = 0u;
-      index.count = iCount;
-    }
-//-------------------------------------
 
     inline unsigned int getTriangleCount() const {return index.count / 3u;}
 };

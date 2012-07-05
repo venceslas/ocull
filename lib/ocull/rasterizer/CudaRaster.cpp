@@ -714,19 +714,6 @@ void CudaRaster::launchStages(void)
 }
 
 
-
-/*
-//
-void CudaRaster::setIndexBuffer_TEST(CUdeviceptr* pDevice, int numTris)
-{
-  assert( pDevice != NULL );
-  
-  m_pDevice = pDevice;
-  m_indexOfs = 0;
-  m_numTris = numTris;
-}
-*/
-
 //----------------------------------------------------------------------------
 
 
