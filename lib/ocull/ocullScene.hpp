@@ -12,7 +12,7 @@
 #include "rasterizer/framework/gpu/Buffer.hpp"
 #include "ocullDefs.hpp"
 
-#define OCULLSCENE_CACHE_FRIENDLY  0
+#define OCULLSCENE_CACHE_FRIENDLY  1
 
 
 namespace ocull {
@@ -37,12 +37,11 @@ struct Mesh
   
   
   public:
-    Mesh() {}
     
     // GL mesh
     void set( unsigned int vbo, size_t vOffset, size_t vCount, size_t vStride,
               unsigned int ibo, size_t iOffset, size_t iCount)
-    {      
+    {
       vertex.buffer.wrapGL(vbo);//
       vertex.offset = vOffset;
       vertex.count  = vCount;
@@ -78,14 +77,14 @@ struct Scene
 {
   public:
     /// [ Geometric datas ]
-#   if !(OCULLSCENE_CACHE_FRIENDLY)
-    std::vector<ocull::Mesh> meshes;
-#   else
+#   if OCULLSCENE_CACHE_FRIENDLY
     // (supposed) more cache efficient
     std::vector<FW::Buffer> vertices;
     std::vector<FW::Buffer> indices;
     std::vector<FW::Vec3i>  vertexParams;
     std::vector<FW::Vec2i>  indexParams;
+#   else
+    std::vector<Mesh> meshes;
 #   endif
 
     /// [ per Instance attributes ]
@@ -94,11 +93,45 @@ struct Scene
   
   
   public:
-    unsigned int insertMesh(const Mesh& mesh);
+    unsigned int insertMesh(Mesh &mesh)
+    {
+      // I think it's higly inefficient, because FW::Buffer are copied and then destroy
+      // massively
+      
+#     if OCULLSCENE_CACHE_FRIENDLY
+      //vertices.push_back( mesh.vertex.buffer );
+      return vertices.size() - 1u;
+#     else
+      //meshes.push_back( mesh );
+      return meshes.size() - 1u;
+#     endif
+    }
     
-    void insertModel( const unsigned int meshId, const Matrix4x4& modelMatrix);
+    void insertModel( const unsigned int meshId, const Matrix4x4& worldMatrix)
+    {
+      meshesId.push_back(meshId);
+      worldMatrices.push_back(worldMatrix);
+    }
     
-    void reset();
+    void insertModel( Mesh& mesh, const Matrix4x4& worldMatrix)
+    {
+      unsigned int id = insertMesh( mesh );
+      insertModel( id, worldMatrix );
+    }
+    
+    void reset()
+    {
+#     if OCULLSCENE_CACHE_FRIENDLY
+      vertices.clear();
+      indices.clear();
+      vertexParams.clear();
+      indexParams.clear();      
+#     else
+      meshes.clear();
+#     endif
+      meshesId.clear();
+      worldMatrices.clear();
+    }
 };
 
 } // namespace ocull

@@ -119,9 +119,9 @@ void Context::uploadScene(ocull::Scene *pScene)
   
   std::cerr << __FUNCTION__ << " : unfinished." << std::endl;
   
-# if 1   // no cache efficient version
+# if OCULLSCENE_CACHE_FRIENDLY
 
-# else   // (supposed) cache efficient
+# else
 
 # endif
 }
